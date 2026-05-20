@@ -1,0 +1,59 @@
+{
+  "stay_id": "stay-alex-001",
+  "guest_id": "alex",
+  "hotel": "The Westin Washington, D.C. City Center",
+  "city": "Washington, DC",
+  "check_in": "2026-05-22",
+  "check_out": "2026-05-25",
+  "generated_at": "2026-05-20T10:00:00Z",
+  "greeting": "Welcome, Alex — your eco-conscious stay in DC is coming up, and we've tailored everything to make it seamless.",
+  "weather_summary": "Expect a warm and sunny weekend in DC — highs around 28°C (82°F) with a light breeze. Perfect for exploring on foot or by bike.",
+  "packing_tips": [
+    "Light layers for the evening — temperatures dip to 18°C after sunset",
+    "Comfortable walking shoes — the National Mall is best explored on foot",
+    "Reusable water bottle — the Westin has refill stations throughout the property"
+  ],
+  "events": [
+    {
+      "name": "DC EcoFest",
+      "date": "May 23, 2026",
+      "type": "sustainability",
+      "why_youll_love_it": "Right up your alley — sustainability vendors, workshops, and a zero-waste marketplace on the National Mall. Free entry."
+    },
+    {
+      "name": "Founding Farmers Brunch",
+      "date": "Any morning",
+      "type": "dining",
+      "why_youll_love_it": "DC's most celebrated farm-to-table brunch, 1.8km from the hotel. Strong vegetarian menu. Westin Serve360 partner."
+    },
+    {
+      "name": "Capital Bikeshare Tour",
+      "date": "Anytime",
+      "type": "outdoor",
+      "why_youll_love_it": "A bike dock is 100m from the hotel. Day pass is $8. Best way to explore the monuments sustainably."
+    }
+  ],
+  "dining": [
+    {
+      "name": "Fare Well",
+      "cuisine": "American Vegan",
+      "dietary_match": "vegetarian",
+      "note": "DC's top vegan restaurant, 4km away. Brunch on weekends is exceptional."
+    },
+    {
+      "name": "Founding Farmers",
+      "cuisine": "Farm-to-Table American",
+      "dietary_match": "vegetarian_options",
+      "note": "1.8km from hotel. Westin partner. Seasonal vegetarian dishes change weekly."
+    },
+    {
+      "name": "Compass Rose",
+      "cuisine": "International Street Food",
+      "dietary_match": "vegetarian_options",
+      "note": "0.9km away. Global flavors with clearly labeled vegetarian and vegan options."
+    }
+  ],
+  "transit": "The Westin is 2 blocks from the McPherson Square Metro station (Blue/Orange/Silver lines). DCA airport is 20 minutes by Metro — take the Yellow line to L'Enfant Plaza, then transfer. No need for a cab.",
+  "property_note": "Your room has been prepared with eco-amenity products and a reusable tote. The rooftop Westin Workout run departs daily at 6:30 AM from the lobby if you'd like to join.",
+  "eco_note": "This hotel earned a 9.1 Eco Score — one of the highest in DC. Your stay earns 3,900 Bonvoy Green Points (base 3,000 + 900 eco bonus)."
+}

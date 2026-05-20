@@ -1,0 +1,60 @@
+{
+  "stay_id": "stay-sam-001",
+  "guest_id": "sam",
+  "hotel": "Element Miami International Airport",
+  "city": "Miami, FL",
+  "check_in": "2026-05-21",
+  "check_out": "2026-05-24",
+  "generated_at": "2026-05-19T10:00:00Z",
+  "greeting": "Sam, your Element Miami stay is tomorrow — here's your personalized arrival brief, including accessibility notes and vegan picks.",
+  "weather_summary": "Hot and humid in Miami — highs 31°C (88°F), feels like 36°C with humidity. Stay hydrated and use SPF. Brief afternoon thunderstorms typical this time of year.",
+  "packing_tips": [
+    "High SPF sunscreen — UV index is extreme in Miami in May",
+    "Refillable water bottle — Miami heat dehydrates fast",
+    "Light, breathable clothing — linen or moisture-wicking fabrics recommended"
+  ],
+  "events": [
+    {
+      "name": "Miami Beach Food & Wine Festival",
+      "date": "May 22, 2026",
+      "type": "food",
+      "why_youll_love_it": "Annual beach food event with multiple vegan vendors and plant-based tasting stations this year."
+    },
+    {
+      "name": "Element Sunrise Yoga on the Terrace",
+      "date": "Daily at 7:00 AM",
+      "type": "wellness",
+      "why_youll_love_it": "Hotel-hosted yoga session on the outdoor terrace. No booking needed — just show up."
+    },
+    {
+      "name": "Weekly Plant-Based Cooking Demo",
+      "date": "May 21, 5:00 PM",
+      "type": "dining",
+      "why_youll_love_it": "Element's kitchen studio hosts a hands-on plant-based cooking demo on check-in day. Free for guests."
+    }
+  ],
+  "dining": [
+    {
+      "name": "Planta South Beach",
+      "cuisine": "Plant-Based Fine Dining",
+      "dietary_match": "vegan",
+      "note": "100% plant-based, 3.5km from the hotel. Best vegan sushi in Miami."
+    },
+    {
+      "name": "Choices Cafe",
+      "cuisine": "Organic Vegan",
+      "dietary_match": "vegan",
+      "note": "2.1km away. Beloved local vegan spot. Raw and cooked options, organic ingredients."
+    },
+    {
+      "name": "Element Hotel Restaurant",
+      "cuisine": "Plant-Forward American",
+      "dietary_match": "vegan",
+      "note": "On-property. Full vegan menu available. Seasonal plant-based breakfast buffet included."
+    }
+  ],
+  "transit": "Element Miami is 5 minutes from MIA airport by hotel shuttle (complimentary, runs every 20 min). The Miami Metrorail Orange Line station is a 10-minute walk for downtown exploration.",
+  "property_note": "Your accessible Studio Suite is on floor 3, near the elevator. Roll-in shower confirmed. The hotel is fully wheelchair-accessible with automatic doors throughout. Lowered check-in counter available.",
+  "accessibility_note": "Accessibility features confirmed for your room: roll-in shower, grab bars, lowered fixtures, visual fire alarm. Request a visual doorbell from the front desk if needed.",
+  "eco_note": "Element Miami earned a 9.4 Eco Score — the highest in our demo portfolio. Solar panels, 100% recycled paper products, and a zero-single-use-plastic policy. Your stay earns 3,900 Bonvoy Green Points."
+}

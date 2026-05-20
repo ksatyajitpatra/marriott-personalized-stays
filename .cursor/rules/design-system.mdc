@@ -1,0 +1,81 @@
+---
+description: UI/UX design system — colors, typography, component conventions, Bonvoy brand alignment
+globs: frontend/**/*.{ts,tsx,css}
+alwaysApply: false
+---
+
+# Design System
+
+## Brand Colors
+```css
+/* Marriott / Bonvoy palette */
+--bonvoy-red:     #C8102E;   /* Primary brand red — CTAs, badges */
+--bonvoy-dark:    #1A1A2E;   /* Dark navy — headers, nav */
+--bonvoy-gold:    #B8962E;   /* Gold — loyalty tier accents, badges */
+
+/* Eco colors */
+--eco-green:      #22c55e;   /* Score ≥ 7 */
+--eco-yellow:     #eab308;   /* Score 5–6.9 */
+--eco-red:        #ef4444;   /* Score < 5 */
+
+/* Neutrals */
+--surface:        #FFFFFF;
+--surface-subtle: #F8F9FA;
+--border:         #E5E7EB;
+--text-primary:   #111827;
+--text-muted:     #6B7280;
+```
+
+In Tailwind config, map these as custom colors.
+
+## Typography
+- Headings: `font-bold` tracking-tight
+- Body: default Inter (Tailwind base)
+- Accessibility font toggle: applies `font-dyslexic` class to `<body>` via OpenDyslexic
+
+## Card Design Pattern
+All cards use this base:
+```tsx
+<div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+```
+No sharp corners anywhere in the UI. Minimum `rounded-xl` on all cards.
+
+## Buttons
+- Primary: `bg-[#C8102E] text-white hover:bg-[#a50d26] rounded-full px-6 py-3`
+- Secondary: `border border-[#C8102E] text-[#C8102E] rounded-full px-6 py-3`
+- Ghost: `text-[#C8102E] underline-offset-2 hover:underline`
+
+## Bottom Navigation (Mobile)
+4 tabs: Home (search), Stays, Map/Explore, Profile
+Use sticky bottom nav on mobile (`fixed bottom-0`).
+
+## Accessibility Modes
+Toggle stored in localStorage as `a11y_mode`:
+```ts
+type A11yMode = {
+  high_contrast: boolean;
+  dyslexia_font: boolean;
+  reduced_motion: boolean;
+  large_touch: boolean; // adds extra padding to all interactive elements
+}
+```
+Apply as CSS classes on `<html>` element. Never use inline styles for a11y modes.
+
+## Loading States
+- Skeleton screens only (no spinners) — use shadcn/ui `Skeleton` component
+- Eco ring: show grey skeleton ring while loading
+
+## Empty States
+Every list/section must have a friendly empty state:
+```tsx
+<div className="flex flex-col items-center gap-2 py-10 text-gray-400">
+  <Icon className="w-10 h-10" />
+  <p className="text-sm">No [items] yet.</p>
+</div>
+```
+
+## Map Styling
+- Use `mapbox://styles/mapbox/streets-v12` — clean, readable
+- Partner markers: colored circles (12px) with white border
+- Selected marker: larger (16px) with shadow
+- Bottom sheet slides up with `transition-transform duration-300`

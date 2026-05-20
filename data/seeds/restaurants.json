@@ -1,0 +1,142 @@
+{
+  "new_york": [
+    {
+      "id": "rest-nyc-001",
+      "name": "Candle 79",
+      "cuisine": "American Vegan",
+      "dietary_tags": ["vegan", "vegetarian", "gluten_free_options"],
+      "distance_km": 2.1,
+      "rating": 4.6,
+      "price_range": "$$$",
+      "address": "154 E 79th St, New York, NY",
+      "note": "NYC's most celebrated vegan fine dining. Warm, elegant atmosphere."
+    },
+    {
+      "id": "rest-nyc-002",
+      "name": "Halal Guys",
+      "cuisine": "Middle Eastern",
+      "dietary_tags": ["halal"],
+      "distance_km": 0.4,
+      "rating": 4.4,
+      "price_range": "$",
+      "address": "307 W 53rd St, New York, NY",
+      "note": "Classic NYC street food institution, now with a dine-in location."
+    },
+    {
+      "id": "rest-nyc-003",
+      "name": "by CHLOE. Midtown",
+      "cuisine": "Fast Casual Vegan",
+      "dietary_tags": ["vegan", "vegetarian"],
+      "distance_km": 0.6,
+      "rating": 4.3,
+      "price_range": "$$",
+      "address": "1 E 53rd St, New York, NY",
+      "note": "Popular vegan fast-casual. Great for quick, filling plant-based meals."
+    },
+    {
+      "id": "rest-nyc-004",
+      "name": "Cafe Boulud",
+      "cuisine": "French Contemporary",
+      "dietary_tags": ["vegetarian_options", "gluten_free_options"],
+      "distance_km": 2.0,
+      "rating": 4.7,
+      "price_range": "$$$$",
+      "address": "20 E 76th St, New York, NY",
+      "note": "Award-winning French restaurant with seasonal vegetarian tasting menu."
+    },
+    {
+      "id": "rest-nyc-005",
+      "name": "Jollibee Times Square",
+      "cuisine": "Filipino Fast Food",
+      "dietary_tags": ["halal_options"],
+      "distance_km": 0.2,
+      "rating": 4.1,
+      "price_range": "$",
+      "address": "605 8th Ave, New York, NY",
+      "note": "Iconic Filipino fast food chain. Halal chicken options available."
+    }
+  ],
+  "washington_dc": [
+    {
+      "id": "rest-dc-001",
+      "name": "Fare Well",
+      "cuisine": "American Vegan",
+      "dietary_tags": ["vegan", "vegetarian"],
+      "distance_km": 4.1,
+      "rating": 4.7,
+      "price_range": "$$",
+      "address": "406 H St NE, Washington, DC",
+      "note": "DC's celebrated vegan comfort food restaurant. Try the brunch on weekends."
+    },
+    {
+      "id": "rest-dc-002",
+      "name": "Founding Farmers",
+      "cuisine": "American Farm-to-Table",
+      "dietary_tags": ["vegetarian_options", "gluten_free_options"],
+      "distance_km": 1.8,
+      "rating": 4.6,
+      "price_range": "$$$",
+      "address": "1924 Pennsylvania Ave NW, Washington, DC",
+      "note": "Westin Serve360 partner. Strong local sourcing. Great brunch."
+    },
+    {
+      "id": "rest-dc-003",
+      "name": "Compass Rose",
+      "cuisine": "International Street Food",
+      "dietary_tags": ["vegetarian_options", "halal_options", "vegan_options"],
+      "distance_km": 0.9,
+      "rating": 4.5,
+      "price_range": "$$",
+      "address": "1346 T St NW, Washington, DC",
+      "note": "Global street food from 20+ countries. Multiple dietary options clearly labeled."
+    }
+  ],
+  "miami": [
+    {
+      "id": "rest-mia-001",
+      "name": "Planta South Beach",
+      "cuisine": "Plant-Based Fine Dining",
+      "dietary_tags": ["vegan", "vegetarian", "gluten_free_options"],
+      "distance_km": 3.5,
+      "rating": 4.8,
+      "price_range": "$$$",
+      "address": "850 Commerce St, Miami Beach, FL",
+      "note": "100% plant-based restaurant. Best vegan sushi in Miami."
+    },
+    {
+      "id": "rest-mia-002",
+      "name": "Choices Cafe",
+      "cuisine": "Organic Vegan",
+      "dietary_tags": ["vegan", "vegetarian", "raw_options"],
+      "distance_km": 2.1,
+      "rating": 4.6,
+      "price_range": "$$",
+      "address": "2580 NW 2nd Ave, Miami, FL",
+      "note": "Beloved local vegan cafe. Raw and cooked options, organic ingredients."
+    }
+  ],
+  "chicago": [
+    {
+      "id": "rest-chi-001",
+      "name": "Chicago Diner — Wrigleyville",
+      "cuisine": "Vegetarian Diner",
+      "dietary_tags": ["vegetarian", "vegan", "gluten_free_options"],
+      "distance_km": 5.2,
+      "rating": 4.5,
+      "price_range": "$$",
+      "address": "3411 N Halsted St, Chicago, IL",
+      "note": "Chicago's original meat-free diner since 1983. Legendary milkshakes."
+    },
+    {
+      "id": "rest-chi-002",
+      "name": "Ras Dashen Ethiopian",
+      "cuisine": "Ethiopian",
+      "dietary_tags": ["vegetarian_options", "vegan_options", "halal"],
+      "distance_km": 3.8,
+      "rating": 4.7,
+      "price_range": "$$",
+      "address": "5846 N Broadway, Chicago, IL",
+      "note": "Authentic Ethiopian. Excellent injera and vegan combo platter."
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+[
+  {
+    "id": "marriott-nyc-times-sq",
+    "name": "New York Marriott Marquis",
+    "brand": "Marriott Hotels",
+    "city": "New York",
+    "state": "NY",
+    "country": "US",
+    "address": "1535 Broadway, New York, NY 10036",
+    "lat": 40.7590,
+    "lng": -73.9845,
+    "image_url": "https://cache.marriott.com/marriottassets/marriott/NYCMQ/nycmq-exterior-0047-hor-wide.jpg",
+    "price_per_night": 389,
+    "rating": 4.3,
+    "pet_friendly": true,
+    "pet_max_weight_kg": 23,
+    "pet_fee_usd": 75,
+    "pet_note": "Up to 2 pets welcome. Dogs and cats only.",
+    "eco": {
+      "energy_kwh_per_room_night": 38.2,
+      "water_liters_per_room_night": 162,
+      "waste_diversion_pct": 72,
+      "certifications": ["LEED Silver", "Green Key"],
+      "carbon_offset_program": true,
+      "fb_sourcing_score": 7.8,
+      "data_as_of": "2026-04-22",
+      "data_source": "MESH (Marriott Environmental Sustainability Hub)",
+      "notes": "Energy from 40% renewable sources. Zero single-use plastic in F&B."
+    },
+    "community_events": [
+      { "name": "Morning Run Club", "time": "7:00 AM daily", "location": "Hotel Lobby", "type": "fitness" },
+      { "name": "Rooftop Yoga", "time": "8:00 AM Sat/Sun", "location": "Rooftop Terrace", "type": "wellness" },
+      { "name": "NYC Sustainability Walking Tour", "time": "10:00 AM Sat", "location": "Hotel Entrance", "type": "sustainability" }
+    ]
+  },
+  {
+    "id": "westin-dc-city-center",
+    "name": "The Westin Washington, D.C. City Center",
+    "brand": "Westin",
+    "city": "Washington",
+    "state": "DC",
+    "country": "US",
+    "address": "1400 M St NW, Washington, DC 20005",
+    "lat": 38.9072,
+    "lng": -77.0320,
+    "image_url": "https://cache.marriott.com/marriottassets/westin/DCAWH/dcawh-exterior-0030-hor-wide.jpg",
+    "price_per_night": 289,
+    "rating": 4.5,
+    "pet_friendly": true,
+    "pet_max_weight_kg": 18,
+    "pet_fee_usd": 50,
+    "pet_note": "Dogs welcome. Pet bed and bowl provided on request.",
+    "eco": {
+      "energy_kwh_per_room_night": 31.5,
+      "water_liters_per_room_night": 141,
+      "waste_diversion_pct": 81,
+      "certifications": ["LEED Gold", "Green Key", "EarthCheck"],
+      "carbon_offset_program": true,
+      "fb_sourcing_score": 8.4,
+      "data_as_of": "2026-04-22",
+      "data_source": "MESH (Marriott Environmental Sustainability Hub)",
+      "notes": "100% renewable electricity. Onsite composting for F&B. Local sourcing from DC-area farms."
+    },
+    "community_events": [
+      { "name": "Westin Workout: 5K Run", "time": "6:30 AM daily", "location": "Hotel Lobby", "type": "fitness" },
+      { "name": "Coworking Lounge Hours", "time": "8 AM–6 PM weekdays", "location": "Heavenly Lobby Lounge", "type": "work" },
+      { "name": "Mindfulness Session", "time": "7:00 AM daily", "location": "Fitness Center Studio", "type": "wellness" }
+    ]
+  },
+  {
+    "id": "ritz-carlton-chicago",
+    "name": "The Ritz-Carlton, Chicago",
+    "brand": "The Ritz-Carlton",
+    "city": "Chicago",
+    "state": "IL",
+    "country": "US",
+    "address": "160 E Pearson St, Chicago, IL 60611",
+    "lat": 41.8964,
+    "lng": -87.6226,
+    "image_url": "https://cache.marriott.com/marriottassets/ritz-carlton/CHIRL/chirl-exterior-0003-hor-wide.jpg",
+    "price_per_night": 695,
+    "rating": 4.8,
+    "pet_friendly": false,
+    "pet_max_weight_kg": null,
+    "pet_fee_usd": null,
+    "pet_note": null,
+    "eco": {
+      "energy_kwh_per_room_night": 55.1,
+      "water_liters_per_room_night": 198,
+      "waste_diversion_pct": 63,
+      "certifications": ["Green Key"],
+      "carbon_offset_program": true,
+      "fb_sourcing_score": 6.9,
+      "data_as_of": "2026-04-22",
+      "data_source": "MESH (Marriott Environmental Sustainability Hub)",
+      "notes": "Luxury amenity packaging transitioning to sustainable materials by Q4 2026."
+    },
+    "community_events": [
+      { "name": "Sommelier-Led Wine Tasting", "time": "6:00 PM Fri", "location": "Deca Restaurant", "type": "dining" },
+      { "name": "Art & Architecture Walking Tour", "time": "10:00 AM Sat", "location": "Hotel Entrance", "type": "culture" }
+    ]
+  },
+  {
+    "id": "element-miami",
+    "name": "Element Miami International Airport",
+    "brand": "Element",
+    "city": "Miami",
+    "state": "FL",
+    "country": "US",
+    "address": "3265 NW 22nd Terrace, Miami, FL 33142",
+    "lat": 25.8081,
+    "lng": -80.2814,
+    "image_url": "https://cache.marriott.com/marriottassets/element/MIAEL/miael-exterior-0001-hor-wide.jpg",
+    "price_per_night": 179,
+    "rating": 4.2,
+    "pet_friendly": true,
+    "pet_max_weight_kg": 22,
+    "pet_fee_usd": 25,
+    "pet_note": "Pet-friendly brand. Dogs and cats welcome with no breed restrictions under weight limit.",
+    "eco": {
+      "energy_kwh_per_room_night": 29.8,
+      "water_liters_per_room_night": 138,
+      "waste_diversion_pct": 88,
+      "certifications": ["LEED Gold", "EarthCheck Certified"],
+      "carbon_offset_program": true,
+      "fb_sourcing_score": 8.9,
+      "data_as_of": "2026-04-22",
+      "data_source": "MESH (Marriott Environmental Sustainability Hub)",
+      "notes": "Element brand is built for sustainability. Solar panels on roof. 100% recycled paper products. Planted-based F&B options as default."
+    },
+    "community_events": [
+      { "name": "Sunrise Yoga on the Terrace", "time": "7:00 AM daily", "location": "Outdoor Terrace", "type": "wellness" },
+      { "name": "Bike Share Orientation", "time": "9:00 AM Sat/Sun", "location": "Hotel Entrance", "type": "outdoor" },
+      { "name": "Weekly Plant-Based Cooking Demo", "time": "5:00 PM Wed", "location": "Kitchen Studio", "type": "dining" }
+    ]
+  },
+  {
+    "id": "marriott-chicago-magnificent-mile",
+    "name": "Chicago Marriott Downtown Magnificent Mile",
+    "brand": "Marriott Hotels",
+    "city": "Chicago",
+    "state": "IL",
+    "country": "US",
+    "address": "540 N Michigan Ave, Chicago, IL 60611",
+    "lat": 41.8921,
+    "lng": -87.6248,
+    "image_url": "https://cache.marriott.com/marriottassets/marriott/CHIDT/chidt-exterior-0001-hor-wide.jpg",
+    "price_per_night": 259,
+    "rating": 4.3,
+    "pet_friendly": true,
+    "pet_max_weight_kg": 15,
+    "pet_fee_usd": 60,
+    "pet_note": "Dogs welcome under 15kg. Pet walking services available from concierge.",
+    "eco": {
+      "energy_kwh_per_room_night": 44.7,
+      "water_liters_per_room_night": 174,
+      "waste_diversion_pct": 67,
+      "certifications": ["Green Key"],
+      "carbon_offset_program": false,
+      "fb_sourcing_score": 6.2,
+      "data_as_of": "2026-04-22",
+      "data_source": "MESH (Marriott Environmental Sustainability Hub)",
+      "notes": "Working toward LEED certification. LED lighting upgrade completed 2025."
+    },
+    "community_events": [
+      { "name": "Morning Run along Lake Michigan", "time": "6:30 AM daily", "location": "Hotel Lobby", "type": "fitness" },
+      { "name": "Chicago Architecture Boat Tour (Group Discount)", "time": "2:00 PM Sat", "location": "Concierge Desk", "type": "culture" }
+    ]
+  }
+]

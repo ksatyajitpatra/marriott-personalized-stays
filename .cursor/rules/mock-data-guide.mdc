@@ -1,0 +1,71 @@
+---
+description: Mock data schemas and seed file locations for all features
+globs: data/**,backend/app/data/**
+alwaysApply: false
+---
+
+# Mock Data Architecture
+
+All data is mocked. No real Marriott API connections. Every field is annotated
+with the real production source it would come from.
+
+## Seed File Index
+| File | Contents | Production Source |
+|---|---|---|
+| `data/seeds/hotels.json` | 8–10 Marriott properties with eco data | Opera PMS + MESH |
+| `data/seeds/partners_nyc.json` | 20+ local partners near NYC Marriott | Google Places + partner agreements |
+| `data/seeds/partners_dc.json` | 20+ local partners near DC Marriott | Same |
+| `data/seeds/partners_chicago.json` | 20+ local partners near Chicago Marriott | Same |
+| `data/seeds/guests.json` | 3 personas: Alex, Jordan, Sam | Bonvoy UGI system |
+| `data/seeds/stays.json` | Pre-loaded upcoming stays per persona | MARSHA/ACRS reservations |
+| `data/seeds/events.json` | 5 events per demo city | Ticketmaster API |
+| `data/seeds/restaurants.json` | 10 restaurants per city with dietary tags | Opera PMS F&B + partner DB |
+| `data/seeds/arrival_brief_alex.json` | Pre-built brief fixture for Alex | Generated once, saved |
+| `data/seeds/arrival_brief_jordan.json` | Pre-built brief fixture for Jordan | Generated once, saved |
+| `data/seeds/arrival_brief_sam.json` | Pre-built brief fixture for Sam | Generated once, saved |
+
+## Guest Personas
+```json
+// Alex Rivera — Bonvoy Gold, vegetarian, eco-conscious
+{ "id": "alex", "name": "Alex Rivera", "tier": "Gold", "points": 28500,
+  "preferences": { "dietary": ["vegetarian"], "interests": ["sustainability","culture","food"],
+  "accessibility": [], "arrival_brief_enabled": true, "eco_nudges_enabled": true },
+  "pets": [] }
+
+// Jordan Kim — Bonvoy Platinum, halal, dog owner
+{ "id": "jordan", "name": "Jordan Kim", "tier": "Platinum", "points": 67200,
+  "preferences": { "dietary": ["halal"], "interests": ["food","outdoor"],
+  "accessibility": [], "arrival_brief_enabled": true },
+  "pets": [{ "id": "pet-001", "name": "Mochi", "species": "dog", "breed": "Shiba Inu", "weight_kg": 10 }] }
+
+// Sam Patel — Bonvoy Silver, vegan, cyclist, accessibility needs
+{ "id": "sam", "name": "Sam Patel", "tier": "Silver", "points": 11800,
+  "preferences": { "dietary": ["vegan"], "interests": ["outdoor","sustainability","wellness"],
+  "accessibility": ["mobility"], "arrival_brief_enabled": true },
+  "pets": [] }
+```
+
+## Eco Score Ranges (realistic values from Serve360 reports)
+- Energy: 30–65 kWh/room-night (industry avg ~50; good hotels ~35)
+- Water: 120–280 L/room-night (industry avg ~200; good hotels ~140)
+- Waste diversion: 35–85% (industry avg ~55%; certified hotels ~75%)
+- Certifications: LEED Silver, LEED Gold, Green Key, EarthCheck
+- F&B sourcing score: 5–9 (based on local/organic sourcing %)
+
+## Loading Pattern (Backend)
+```python
+# app/data/loader.py
+import json
+from pathlib import Path
+
+SEEDS_PATH = Path(__file__).parent.parent.parent / "data" / "seeds"
+
+def load_seed(filename: str) -> dict | list:
+    with open(SEEDS_PATH / filename) as f:
+        return json.load(f)
+
+# Loaded once at startup into module-level dicts:
+HOTELS: dict[str, dict] = {h["id"]: h for h in load_seed("hotels.json")}
+GUESTS: dict[str, dict] = {g["id"]: g for g in load_seed("guests.json")}
+STAYS: dict[str, dict] = {s["id"]: s for s in load_seed("stays.json")}
+```

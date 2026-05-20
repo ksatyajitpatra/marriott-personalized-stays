@@ -1,0 +1,69 @@
+---
+description: Backend coding standards for FastAPI, Python 3.11, and data models
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# Backend Standards
+
+## FastAPI Patterns
+- All routes use `async def` — no synchronous route handlers
+- Use Pydantic v2 models for all request/response bodies
+- Group routes with `APIRouter` in `/routers/` — never define routes in `main.py`
+- Use `Depends()` for shared logic (e.g., get_current_persona, get_db)
+
+```python
+# ✅ GOOD
+from fastapi import APIRouter, Depends
+from app.models import EcoScoreResponse
+from app.dependencies import get_hotel_service
+
+router = APIRouter(prefix="/hotels", tags=["hotels"])
+
+@router.get("/{hotel_id}/eco-score", response_model=EcoScoreResponse)
+async def get_eco_score(
+    hotel_id: str,
+    hotel_service: HotelService = Depends(get_hotel_service),
+) -> EcoScoreResponse:
+    ...
+```
+
+## Type Annotations
+- Every function must have full type annotations on all parameters and return types
+- Use `list[T]`, `dict[K, V]` (Python 3.10+ style) — not `List[T]`, `Dict[K, V]`
+- Use `X | None` instead of `Optional[X]`
+
+## Pydantic Models
+- All models in `/app/models/` — one file per domain (hotel.py, guest.py, brief.py)
+- Use `model_config = ConfigDict(from_attributes=True)` for ORM-compatible models
+
+## Data Layer
+- All seed data loaded once at startup from `/data/seeds/*.json`
+- Loaded via `app/data/loader.py` into in-memory dicts keyed by ID
+- No actual DB queries for the demo — everything is from the in-memory seed store
+- Production path (what we'd replace with): documented in comments and PRD
+
+## LLM Calls
+- All LLM calls in `/app/services/llm_service.py`
+- Always have a `USE_MOCK_LLM=true` env fallback that returns a hardcoded fixture
+- Log every LLM call with input token count estimate
+
+## CORS
+- Allow `http://localhost:3000` (Next.js dev) in development
+- Set via `ALLOWED_ORIGINS` env var
+
+## File Structure
+```
+backend/
+├── app/
+│   ├── main.py            # FastAPI app + CORS + startup
+│   ├── routers/           # hotels.py, guests.py, brief.py, partners.py
+│   ├── models/            # Pydantic schemas
+│   ├── services/          # business logic (eco_service.py, brief_service.py, llm_service.py)
+│   ├── data/              # loader.py — loads seed JSON into memory
+│   └── dependencies.py    # FastAPI Depends() helpers
+├── data/
+│   └── seeds/             # hotels.json, partners_*.json, guests.json, stays.json
+├── tests/
+└── requirements.txt
+```

@@ -1,0 +1,68 @@
+---
+description: Frontend coding standards for Next.js 14, Tailwind, shadcn/ui, and TypeScript
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend Standards
+
+## Component Structure
+- Use **functional components only** with TypeScript — no class components
+- One component per file; filename matches the component name (PascalCase)
+- Co-locate styles with the component using Tailwind classes — no separate CSS files
+- Use `shadcn/ui` components as the base; extend with Tailwind, don't override
+
+## TypeScript
+- All props must have a typed interface defined above the component
+- Use `interface` for props, `type` for unions/intersections
+- No `any` types — use `unknown` + type narrowing if needed
+
+```tsx
+// ✅ GOOD
+interface EcoScoreRingProps {
+  score: number;        // 0–10
+  size?: "sm" | "md" | "lg";
+  showLabel?: boolean;
+}
+
+export function EcoScoreRing({ score, size = "md", showLabel = true }: EcoScoreRingProps) { ... }
+
+// ❌ BAD
+export function EcoScoreRing(props: any) { ... }
+```
+
+## Data Fetching
+- Use `fetch` with `async/await` in Server Components where possible (Next.js App Router)
+- For client-side fetching, use SWR or React Query — no raw `useEffect` + `fetch` combos
+- All API calls go through `/lib/api.ts` — never fetch directly from a component
+
+## State Management
+- Use Zustand for global state (selected persona, user preferences, cart/booking state)
+- Keep component state local with `useState` when it doesn't need to be shared
+- The active persona store lives in `/store/persona.ts`
+
+## Mobile-First
+- Design for 390px (iPhone 15) base width first
+- All interactive elements must be at least 44×44px touch target
+- Use Tailwind's `sm:` / `md:` breakpoints to enhance for larger screens
+
+## Mapbox
+- Map component lives in `/components/map/LocalPartnerMap.tsx`
+- Always lazy-load with `dynamic(() => import(...), { ssr: false })` — Mapbox breaks with SSR
+- Store Mapbox token in `NEXT_PUBLIC_MAPBOX_TOKEN` env var
+
+## File Structure
+```
+frontend/
+├── app/                   # Next.js App Router pages
+├── components/            # Reusable UI components
+│   ├── eco/               # EcoScoreRing, EcoSubScoreBreakdown, etc.
+│   ├── brief/             # ArrivalBriefCard, BriefSection, etc.
+│   ├── map/               # LocalPartnerMap, PartnerCard, etc.
+│   ├── profile/           # PreferencesSection, BadgeShelf, etc.
+│   └── ui/                # shadcn/ui re-exports
+├── lib/                   # API client, utils, constants
+├── store/                 # Zustand stores
+├── types/                 # Shared TypeScript types
+└── public/                # Static assets
+```

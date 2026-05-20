@@ -1,0 +1,48 @@
+---
+description: Eco Rating feature spec — score formula, components, data schema, and points logic
+globs: frontend/components/eco/**,backend/app/routers/hotels.py,backend/app/services/eco_service.py
+alwaysApply: false
+---
+
+# Feature: Eco Rating
+
+## Score Formula
+```
+eco_score (0–10) = Σ(sub_score_i × weight_i)
+```
+
+| Sub-Score | Weight | Good Threshold | Source (mock → production) |
+|---|---|---|---|
+| Energy (kWh/room-night) | 25% | < 40 = 10pts | Seed JSON → MESH |
+| Water (L/room-night) | 20% | < 150 = 10pts | Seed JSON → MESH |
+| Waste Diversion % | 20% | > 75% = 10pts | Seed JSON → MESH |
+| Certifications | 15% | LEED/Green Key = 10pts | Seed JSON → MESH Scorecard |
+| Carbon Offset Program | 10% | true = 10pts | Seed JSON → CAP Database |
+| F&B Sourcing Score | 10% | > 8 = 10pts | Seed JSON → SPROUT |
+
+Each sub-score is normalized to 0–10 before weighting.
+
+## Green Points Multiplier
+- Score ≥ 8.0 → +900 bonus points (base 3000 + 900)
+- Score 6.0–7.9 → +300 bonus points (base 3000 + 300)
+- Score < 6.0 → no bonus
+
+## Eco Badges
+- "Green Stay" → stay completed at a hotel with score ≥ 8
+- "Eco Warrior" → 3× Green Stay badges earned
+- Brand badges: stay at Element/Westin/Ritz with score ≥ 8 → brand-specific badge
+
+## Components to Build
+- `EcoScoreRing` — circular SVG ring, colored by score (green/yellow/red), score in center
+- `EcoSubScoreBreakdown` — accordion with 6 sub-scores, bar indicators, production source label
+- `EcoPointsCallout` — "Book this hotel, earn +900 Bonvoy Green Points" banner
+- `EcoBadgeDisplay` — badge shelf on profile page
+- `DataSourceNote` — small footnote: "MESH data, last updated [date]"
+
+## Color Coding
+- Score ≥ 7: green (`#22c55e`)
+- Score 5–6.9: yellow (`#eab308`)
+- Score < 5: red (`#ef4444`)
+
+## API Endpoint
+`GET /hotels/{hotel_id}/eco-score` → returns full EcoScoreResponse with sub-scores

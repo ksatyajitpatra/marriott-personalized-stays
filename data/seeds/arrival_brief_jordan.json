@@ -1,0 +1,59 @@
+{
+  "stay_id": "stay-jordan-001",
+  "guest_id": "jordan",
+  "hotel": "New York Marriott Marquis",
+  "city": "New York, NY",
+  "check_in": "2026-05-23",
+  "check_out": "2026-05-27",
+  "generated_at": "2026-05-21T10:00:00Z",
+  "greeting": "Jordan and Mochi — NYC is ready for you. Here's everything you need for a perfect stay.",
+  "weather_summary": "Warm and mostly sunny in New York — highs around 25°C (77°F). A brief shower possible Saturday afternoon, so pack a light rain layer.",
+  "packing_tips": [
+    "Light rain jacket for Saturday — brief afternoon showers forecast",
+    "Mochi's leash and any medications — the hotel pet kit includes a bed and bowl",
+    "Comfortable sneakers — NYC is best explored on foot"
+  ],
+  "events": [
+    {
+      "name": "NYC 5K Green Run",
+      "date": "May 24, 2026",
+      "type": "fitness",
+      "why_youll_love_it": "A community run along the Hudson River — Mochi can join! Dog-friendly route flagged on the event page."
+    },
+    {
+      "name": "NYC Street Art Walking Tour",
+      "date": "Daily at 10 AM & 2 PM",
+      "type": "culture",
+      "why_youll_love_it": "Dog-friendly tour through Chelsea's famous street art scene. Marriott partner — $5 off with your confirmation number."
+    },
+    {
+      "name": "Central Park SummerStage",
+      "date": "May 25, 2026",
+      "type": "music",
+      "why_youll_love_it": "Free outdoor concert in Central Park. Dogs on leash are welcome in most park areas."
+    }
+  ],
+  "dining": [
+    {
+      "name": "Halal Guys — Times Square",
+      "cuisine": "Middle Eastern",
+      "dietary_match": "halal",
+      "note": "4-minute walk from the hotel. NYC institution. Open until 4 AM."
+    },
+    {
+      "name": "Jollibee Times Square",
+      "cuisine": "Filipino Fast Food",
+      "dietary_match": "halal_options",
+      "note": "2-minute walk. Halal chicken options available. Great for a quick meal."
+    },
+    {
+      "name": "Cafe Boulud",
+      "cuisine": "French Contemporary",
+      "dietary_match": "halal_options",
+      "note": "Award-winning French restaurant with halal-certified dishes available on request."
+    }
+  ],
+  "transit": "Times Square is highly walkable. For the airport: take the AirTrain from JFK to Jamaica, then the E/J/Z train to Midtown — about 50 minutes and $10. Taxi is ~$70 and 45 minutes depending on traffic.",
+  "property_note": "Mochi's pet kit (bed, bowl, waste bags) will be set up in your room before arrival. The Bryant Park Dog Run is a 7-minute walk — great for off-leash time.",
+  "pet_note": "Pet-friendly floor confirmed. Pet fee of $75 has been added to your reservation. Nearest 24/7 vet: Central Park Veterinary Group, 1.8km away."
+}

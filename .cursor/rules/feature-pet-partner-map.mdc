@@ -1,0 +1,91 @@
+---
+description: Pet Profile and Local Partner Map feature spec — Mapbox setup, data schema, categories
+globs: frontend/components/map/**,frontend/components/pet/**,backend/app/routers/partners.py
+alwaysApply: false
+---
+
+# Feature: Pet Profile + Local Partner Map
+
+## Pet Profile
+Stored in `guest.pets[]` — each pet has:
+```typescript
+interface PetProfile {
+  id: string;
+  name: string;
+  species: "dog" | "cat" | "other";
+  breed: string;
+  weight_kg: number;
+}
+```
+
+**Booking flow:** If guest has a pet profile AND the hotel is pet-friendly:
+- Show "Bring [Pet Name]?" step in booking flow
+- Display pet fee transparently (from hotel seed data)
+- Store `booking.has_pet = true` on confirmation
+
+**Hotel search:** When guest has an active pet profile, show:
+- Pet-friendly filter chip in search results
+- `PetFriendlyBadge` on matching hotel cards
+- Pet weight limit check (warn if pet exceeds `hotel.pet_max_weight_kg`)
+
+## Local Partner Map
+
+### Mapbox Setup
+- Token env var: `NEXT_PUBLIC_MAPBOX_TOKEN`
+- Style: `mapbox://styles/mapbox/streets-v12`
+- Initial view: hotel lat/lng, zoom 14
+- Map component MUST be lazy-loaded with `dynamic(..., { ssr: false })`
+
+### Partner Categories & Icons
+| Category | Icon | Color |
+|---|---|---|
+| Vet (emergency) | 🏥 | red |
+| Vet (regular) | 🐾 | orange |
+| Dog walker / sitter | 🦮 | amber |
+| Dog park | 🌳 | green |
+| Pet-welcome restaurant | 🍽️ | purple |
+| Pet supply store | 🛒 | blue |
+| Bike rental | 🚲 | cyan |
+| Vegan restaurant | 🥗 | lime |
+| EV charging | ⚡ | yellow |
+| Refill station | 💧 | sky |
+| Local experience | 🎭 | indigo |
+
+### Partner Seed Data Schema
+```json
+{
+  "id": "partner-001",
+  "hotel_id": "marriott-nyc-times-sq",
+  "name": "Central Park Veterinary",
+  "category": "vet_emergency",
+  "lat": 40.7850,
+  "lng": -73.9683,
+  "address": "123 W 77th St, New York, NY",
+  "phone": "+1-212-555-0123",
+  "hours": "24/7",
+  "rating": 4.8,
+  "is_marriott_partner": true,
+  "pet_relevant": true,
+  "distance_km": 1.2
+}
+```
+
+### Map Interactions
+1. Category filter chips (horizontal scroll at top of map) — toggle on/off
+2. Tap marker → bottom sheet slides up with `PartnerCard`
+3. `PartnerCard` shows: name, distance, hours, rating, phone, "Get Directions" button
+4. "Marriott Partner" gold badge on verified partners
+5. Default: show all categories; if pet profile active, highlight pet-relevant by default
+
+### Components
+- `LocalPartnerMap` — main Mapbox wrapper (lazy-loaded)
+- `PartnerCategoryFilter` — horizontal chip row
+- `PartnerMarker` — custom colored marker by category
+- `PartnerBottomSheet` — slide-up sheet on marker tap
+- `PartnerCard` — card inside the bottom sheet
+- `PetProfileForm` — used in profile page and booking flow
+- `PetFriendlyBadge` — pill on hotel cards
+
+### API Endpoints
+`GET /hotels/{hotel_id}/partners?categories=vet,dog_park&lat=40.7&lng=-73.9`
+`GET /guests/{guest_id}/pets` / `POST /guests/{guest_id}/pets` / `DELETE /guests/{guest_id}/pets/{pet_id}`

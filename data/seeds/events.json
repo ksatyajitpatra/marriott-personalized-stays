@@ -1,0 +1,91 @@
+{
+  "new_york": [
+    {
+      "id": "evt-nyc-001",
+      "name": "NYC Pride March",
+      "date": "2026-06-28",
+      "type": "culture",
+      "venue": "5th Avenue, Manhattan",
+      "description": "Annual Pride March through Midtown Manhattan.",
+      "interest_tags": ["culture", "community"]
+    },
+    {
+      "id": "evt-nyc-002",
+      "name": "Central Park SummerStage",
+      "date": "2026-05-25",
+      "type": "music",
+      "venue": "Rumsey Playfield, Central Park",
+      "description": "Free outdoor concert series in Central Park.",
+      "interest_tags": ["music", "outdoor", "culture"]
+    },
+    {
+      "id": "evt-nyc-003",
+      "name": "NYC 5K Green Run",
+      "date": "2026-05-24",
+      "type": "fitness",
+      "venue": "Hudson River Park",
+      "description": "Community run benefitting NYC urban green spaces.",
+      "interest_tags": ["fitness", "sustainability", "outdoor"]
+    }
+  ],
+  "washington_dc": [
+    {
+      "id": "evt-dc-001",
+      "name": "Smithsonian Folklife Festival",
+      "date": "2026-06-25",
+      "type": "culture",
+      "venue": "National Mall",
+      "description": "Free annual festival celebrating cultural traditions.",
+      "interest_tags": ["culture", "food", "outdoor"]
+    },
+    {
+      "id": "evt-dc-002",
+      "name": "Capital Pride Festival",
+      "date": "2026-06-07",
+      "type": "culture",
+      "venue": "Pennsylvania Ave NW",
+      "description": "DC's annual Pride celebration.",
+      "interest_tags": ["culture", "community", "nightlife"]
+    },
+    {
+      "id": "evt-dc-003",
+      "name": "DC EcoFest",
+      "date": "2026-05-23",
+      "type": "sustainability",
+      "venue": "National Mall Grounds",
+      "description": "Sustainability fair with vendors, workshops, and speakers.",
+      "interest_tags": ["sustainability", "culture", "wellness"]
+    }
+  ],
+  "miami": [
+    {
+      "id": "evt-mia-001",
+      "name": "Miami Beach Food & Wine Festival",
+      "date": "2026-05-22",
+      "type": "food",
+      "venue": "South Beach",
+      "description": "Annual food and wine event on the beach.",
+      "interest_tags": ["food", "culture", "nightlife"]
+    },
+    {
+      "id": "evt-mia-002",
+      "name": "Ultra Music Festival",
+      "date": "2026-05-23",
+      "type": "music",
+      "venue": "Bayfront Park Amphitheatre",
+      "description": "World-renowned electronic music festival.",
+      "interest_tags": ["music", "nightlife"]
+    }
+  ],
+  "chicago": [
+    {
+      "id": "evt-chi-001",
+      "name": "Chicago Restaurant Week",
+      "date": "2026-05-22",
+      "type": "food",
+      "venue": "Citywide",
+      "description": "Special prix-fixe menus at hundreds of Chicago restaurants.",
+      "interest_tags": ["food", "culture"]
+    }
+  ]
+}

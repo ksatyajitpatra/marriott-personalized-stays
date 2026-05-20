@@ -1,0 +1,57 @@
+[
+  {
+    "id": "stay-alex-001",
+    "guest_id": "alex",
+    "hotel_id": "westin-dc-city-center",
+    "check_in": "2026-05-22",
+    "check_out": "2026-05-25",
+    "nights": 3,
+    "room_type": "Heavenly King Room",
+    "confirmation_number": "12345678",
+    "status": "upcoming",
+    "has_pet": false,
+    "arrival_brief_generated": false
+  },
+  {
+    "id": "stay-jordan-001",
+    "guest_id": "jordan",
+    "hotel_id": "marriott-nyc-times-sq",
+    "check_in": "2026-05-23",
+    "check_out": "2026-05-27",
+    "nights": 4,
+    "room_type": "Deluxe King — Pet Floor",
+    "confirmation_number": "87654321",
+    "status": "upcoming",
+    "has_pet": true,
+    "pet_id": "pet-001",
+    "pet_fee_charged": 75,
+    "arrival_brief_generated": false
+  },
+  {
+    "id": "stay-sam-001",
+    "guest_id": "sam",
+    "hotel_id": "element-miami",
+    "check_in": "2026-05-21",
+    "check_out": "2026-05-24",
+    "nights": 3,
+    "room_type": "Studio Suite — Accessible",
+    "confirmation_number": "11223344",
+    "status": "upcoming",
+    "has_pet": false,
+    "arrival_brief_generated": false
+  },
+  {
+    "id": "stay-alex-past-001",
+    "guest_id": "alex",
+    "hotel_id": "element-miami",
+    "check_in": "2026-04-10",
+    "check_out": "2026-04-13",
+    "nights": 3,
+    "room_type": "Studio Suite",
+    "confirmation_number": "99887766",
+    "status": "completed",
+    "has_pet": false,
+    "eco_badge_earned": "green_stay",
+    "points_earned": 3900
+  }
+]

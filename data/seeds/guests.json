@@ -1,0 +1,92 @@
+[
+  {
+    "id": "alex",
+    "name": "Alex Rivera",
+    "email": "alex.rivera@example.com",
+    "bonvoy_id": "MBV-100-ALEX",
+    "tier": "Gold",
+    "tier_color": "#B8962E",
+    "points": 28500,
+    "badges": [],
+    "preferences": {
+      "dietary": ["vegetarian"],
+      "interests": ["sustainability", "culture", "food"],
+      "accessibility": [],
+      "arrival_brief_enabled": true,
+      "eco_nudges_enabled": true,
+      "local_partners_enabled": true,
+      "preference_learning_enabled": false
+    },
+    "accessibility_mode": {
+      "high_contrast": false,
+      "dyslexia_font": false,
+      "reduced_motion": false,
+      "large_touch": false
+    },
+    "pets": [],
+    "language": "en"
+  },
+  {
+    "id": "jordan",
+    "name": "Jordan Kim",
+    "email": "jordan.kim@example.com",
+    "bonvoy_id": "MBV-200-JORD",
+    "tier": "Platinum",
+    "tier_color": "#A8A9AD",
+    "points": 67200,
+    "badges": ["green_stay"],
+    "preferences": {
+      "dietary": ["halal"],
+      "interests": ["food", "outdoor", "nightlife"],
+      "accessibility": [],
+      "arrival_brief_enabled": true,
+      "eco_nudges_enabled": false,
+      "local_partners_enabled": true,
+      "preference_learning_enabled": true
+    },
+    "accessibility_mode": {
+      "high_contrast": false,
+      "dyslexia_font": false,
+      "reduced_motion": false,
+      "large_touch": false
+    },
+    "pets": [
+      {
+        "id": "pet-001",
+        "name": "Mochi",
+        "species": "dog",
+        "breed": "Shiba Inu",
+        "weight_kg": 10,
+        "photo_url": null
+      }
+    ],
+    "language": "en"
+  },
+  {
+    "id": "sam",
+    "name": "Sam Patel",
+    "email": "sam.patel@example.com",
+    "bonvoy_id": "MBV-300-SAMP",
+    "tier": "Silver",
+    "tier_color": "#C0C0C0",
+    "points": 11800,
+    "badges": [],
+    "preferences": {
+      "dietary": ["vegan"],
+      "interests": ["outdoor", "sustainability", "wellness"],
+      "accessibility": ["mobility"],
+      "arrival_brief_enabled": true,
+      "eco_nudges_enabled": true,
+      "local_partners_enabled": true,
+      "preference_learning_enabled": false
+    },
+    "accessibility_mode": {
+      "high_contrast": false,
+      "dyslexia_font": true,
+      "reduced_motion": true,
+      "large_touch": true
+    },
+    "pets": [],
+    "language": "en"
+  }
+]

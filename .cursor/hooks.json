@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": ".cursor/hooks/update-tracker.sh",
+        "matcher": "Write|StrReplace"
+      }
+    ],
+    "postToolUse": [
+      {
+        "type": "prompt",
+        "matcher": "Shell",
+        "prompt": "The agent just ran a shell command. If the output shows a successful `npm install`, `pip install`, or project initialization, remind the agent to update APP_PRD.md Section 15 (Implementation Status Tracker) to check off the relevant infrastructure item. Here is the tool output: $ARGUMENTS",
+        "timeout": 8
+      }
+    ]
+  }
+}

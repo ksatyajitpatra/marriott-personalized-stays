@@ -1,0 +1,71 @@
+---
+description: Arrival Brief feature spec — LLM prompt, data sources, consent, and components
+globs: frontend/components/brief/**,backend/app/routers/brief.py,backend/app/services/brief_service.py,backend/app/services/llm_service.py
+alwaysApply: false
+---
+
+# Feature: Arrival Brief
+
+## What It Is
+An LLM-generated personalized 1-page briefing shown in-app 48 hours before check-in.
+Zero associate involvement. Opt-in consent toggle in user profile.
+
+## Data Inputs
+| Section | Source for Demo | Production Source |
+|---|---|---|
+| Weather | OpenWeatherMap API (LIVE, free) | Same |
+| Events | Mock JSON in seed data | Ticketmaster Discovery API |
+| Dining | Mock JSON filtered by dietary prefs | Opera PMS F&B data + partner DB |
+| Transit | Mock static data per city | Google Maps Directions API |
+| Property notes | Mock per hotel | Opera PMS / GXP guest notes |
+| Sunrise/sunset | Open-Meteo API (LIVE, free) | Same |
+
+## LLM Prompt Template
+Keep this consistent — do not change prompt structure without updating this rule.
+
+```
+System: You are a warm, knowledgeable Marriott concierge.
+Generate a concise arrival brief for a guest.
+
+Guest preferences: {dietary_prefs}, {interest_tags}
+Hotel: {hotel_name}, {city}
+Stay: {check_in} to {check_out}
+Weather: {weather_json}
+Events (top 5): {events_json}
+Restaurants nearby: {restaurants_json}
+Transit: {transit_json}
+Property notes: {property_notes}
+
+Return JSON:
+{
+  "greeting": "string (1 sentence, warm)",
+  "weather_summary": "string (≤40 words)",
+  "packing_tips": ["string", ...] (3 tips),
+  "events": [{"name", "date", "type", "why_youll_love_it"}] (top 3),
+  "dining": [{"name", "cuisine", "dietary_match", "note"}] (top 3),
+  "transit": "string (≤60 words)",
+  "property_note": "string (≤40 words)"
+}
+```
+
+## Mock Fallback
+When `USE_MOCK_LLM=true`, return a pre-built fixture for each persona from
+`/data/seeds/arrival_brief_{persona_id}.json`. Always have mock data for Alex, Jordan, Sam.
+
+## Consent & Privacy
+- Toggle lives in `/profile` → "Arrival Brief" switch
+- Stored in guest profile as `preferences.arrival_brief_enabled: bool`
+- If disabled, do not generate or show the brief — show a "Re-enable in Settings" placeholder instead
+- No external data sent except: city name + check-in date to weather API (no PII)
+
+## Components
+- `ArrivalBriefCard` — teaser card in My Stays view (appears 48h before check-in)
+- `ArrivalBriefPage` — full brief at `/arrival-brief/:stay_id`
+- `WeatherWidget` — 3-day strip (icon, high/low temp)
+- `BriefSection` — reusable: icon + heading + content
+- `DietaryFilterBadge` — "Filtered for: Vegetarian" pill shown on dining section
+- `ConsentToggleRow` — in profile settings page
+
+## API Endpoint
+`GET /stays/{stay_id}/arrival-brief` → triggers brief generation (or returns cached)
+`POST /stays/{stay_id}/arrival-brief/refresh` → forces regeneration

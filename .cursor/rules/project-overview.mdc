@@ -1,0 +1,33 @@
+---
+description: Project overview, goals, and constraints — read this first
+alwaysApply: true
+---
+
+# Marriott Bonvoy Enhanced Experience
+
+## What We're Building
+An additive web app (mobile-first) that enhances the Marriott Bonvoy experience with three hero features:
+1. **Eco Rating** — per-property sustainability score (0–10) with Green Points multiplier and badges
+2. **Arrival Brief** — LLM-generated personalized pre-stay briefing (weather, events, dining, transit)
+3. **Pet + Local Partner Map** — pet booking integration + interactive Mapbox map of nearby services
+
+## Hard Constraints — Never Violate These
+- **Additive only** — existing Bonvoy flows must stay untouched
+- **Associate Effort Delta ≤ 0** — no feature increases hotel worker workload
+- **Privacy by default** — per-feature consent toggles; no PII sent to third parties without consent
+- **All data is mocked** — no real Marriott API/DB connections; every mock cites its real production source
+- **All generations** — do NOT frame features as "Gen Z only"; they serve all travelers
+
+## Tech Stack
+- Frontend: Next.js 14 (App Router) + Tailwind CSS + shadcn/ui
+- Backend: FastAPI (Python 3.11)
+- Maps: Mapbox GL JS
+- State: Zustand
+- Mock data: JSON seed files in `/data/seeds/`
+- Auth: 3 hardcoded personas (Alex, Jordan, Sam) — no real auth needed
+
+## Full PRD
+See `APP_PRD.md` at the root of the repo for complete feature specs, screen map, data schemas, and build plan.
+
+## Implementation Tracker
+See Section 15 of `APP_PRD.md` — check off items as they are completed.
