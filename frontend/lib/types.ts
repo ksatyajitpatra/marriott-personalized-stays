@@ -118,6 +118,57 @@ export interface EcoScoreResponse {
   data_source: string;
 }
 
+/* ------------------------------ Badges ------------------------------ */
+
+export type BadgeCategory = "sustainability" | "loyalty" | "explorer" | "lifestyle";
+
+export interface BadgeItem {
+  id: string;
+  label: string;
+  category: BadgeCategory;
+  description: string;
+  image_id: string;
+  earned: boolean;
+  current_tier: number;
+  max_tier: number;
+  current_tier_label: string | null;
+  progress_value: number;
+  next_tier_threshold: number | null;
+  next_tier_label: string | null;
+  hint: string;
+}
+
+export interface BadgeCategorySection {
+  id: BadgeCategory;
+  label: string;
+  description: string;
+  badges: BadgeItem[];
+}
+
+export interface BadgeShelfStats {
+  total_earned: number;
+  total_available: number;
+  completed_stays: number;
+  cities_visited: number;
+  brands_visited: number;
+  eco_leader_stays: number;
+}
+
+export interface QualifyingStaySummary {
+  stay_id: string;
+  hotel_id: string;
+  hotel_name: string;
+  check_in: string;
+  eco_score: number;
+}
+
+export interface BadgeShelfResponse {
+  guest_id: string;
+  stats: BadgeShelfStats;
+  sections: BadgeCategorySection[];
+  qualifying_stays: QualifyingStaySummary[];
+}
+
 export interface PartnerResponse {
   id: string;
   hotel_id: string;

@@ -87,13 +87,13 @@
     "eco": {
       "energy_kwh_per_room_night": 55.1,
       "water_liters_per_room_night": 198,
-      "waste_diversion_pct": 63,
+      "waste_diversion_pct": 45,
       "certifications": ["Green Key"],
-      "carbon_offset_program": true,
+      "carbon_offset_program": false,
       "fb_sourcing_score": 6.9,
       "data_as_of": "2026-04-22",
       "data_source": "MESH (Marriott Environmental Sustainability Hub)",
-      "notes": "Luxury amenity packaging transitioning to sustainable materials by Q4 2026."
+      "notes": "Older luxury build with high energy intensity. Carbon offset program planned for 2027. Waste diversion improvements scoped — large F&B operation drives volume."
     },
     "community_events": [
       { "name": "Sommelier-Led Wine Tasting", "time": "6:00 PM Fri", "location": "Deca Restaurant", "type": "dining" },

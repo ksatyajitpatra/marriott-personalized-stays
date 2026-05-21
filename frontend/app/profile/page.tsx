@@ -13,6 +13,7 @@ import {
 } from "@/lib/preferences";
 import { PreferenceChips } from "@/components/profile/PreferenceChips";
 import { PetServiceRadiusControl } from "@/components/pet/PetServiceRadiusControl";
+import { BadgeShelf } from "@/components/eco/BadgeShelf";
 
 export default function ProfilePage(): React.ReactElement {
   const router = useRouter();
@@ -67,6 +68,8 @@ export default function ProfilePage(): React.ReactElement {
             </p>
           )}
         </div>
+
+        <BadgeShelf />
 
         <section className="bg-white border border-[var(--color-bonvoy-rule)] rounded-lg p-6">
           <div className="flex items-center gap-2 mb-4">

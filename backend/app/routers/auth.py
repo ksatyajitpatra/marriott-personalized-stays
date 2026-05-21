@@ -18,7 +18,9 @@ from app.models.auth import (
     UpdatePreferencesRequest,
     build_guest_summary,
 )
+from app.models.badge import BadgeShelfResponse
 from app.services import guest_preference_service
+from app.services.badge_service import compute_badge_shelf
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -86,3 +88,14 @@ async def update_preferences(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Guest not found"
         ) from None
+
+
+@router.get("/badges", response_model=BadgeShelfResponse)
+async def get_badges(
+    guest: GuestSummary = Depends(require_guest),
+) -> BadgeShelfResponse:
+    """Eco badge shelf — derived from the guest's completed stays.
+
+    See `app/services/badge_service.py` for the badge rules.
+    """
+    return compute_badge_shelf(guest.id)

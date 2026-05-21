@@ -693,10 +693,13 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] EcoScoreRing component (frontend) — circular SVG ring used on cards + detail
 - [x] EcoSubScoreBreakdown component (frontend) — `EcoScoreDetail` accordion of 6 sub-scores
 - [x] EcoPointsCallout component (frontend) — Green Points multiplier banner inside `EcoScoreDetail`
-- [ ] EcoBadgeDisplay component (frontend)
+- [x] EcoBadgeDisplay component (frontend) — badge shelf on `/profile` (Green Stay, Eco Warrior, brand badges, locked-tile progress hint, "how was this earned?" stay breakdown)
 - [x] Hotels loaded from seed data with eco scores (backend `GET /hotels`)
 - [x] Filter by eco score on search results (backend `?min_eco=`; UI slider on `/search`)
 - [x] PRD eco scoring formula implemented (`compute_eco_score` — 6 weighted sub-scores, 900/300 bonus tiers)
+- [x] Backend pytest suite for eco service (`backend/tests/test_eco_service.py` — 38 tests covering normalization curves, certs tier, points tier, color band, weighted sum, and seed snapshot)
+- [x] Backend badge service + endpoint (`compute_badge_shelf`, `GET /auth/badges`) deriving badges from completed stays + eco score; full pytest coverage in `test_badge_service.py`
+- [x] Demo seed covers all three Green Points tiers (Element/Westin/NYC ≥ 8 → +900, Chicago Marriott 7.2 → +300, Ritz 5.4 → no bonus)
 
 ### Feature: Arrival Brief
 - [x] Weather API integration (OpenWeatherMap with deterministic mock fallback)

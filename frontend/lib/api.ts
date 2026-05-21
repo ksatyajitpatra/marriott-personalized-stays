@@ -5,6 +5,7 @@
 
 import type {
   ArrivalBriefResponse,
+  BadgeShelfResponse,
   EcoScoreResponse,
   GuestProfile,
   GuestSummary,
@@ -125,6 +126,7 @@ export const auth = {
       method: "PATCH",
       body: payload,
     }),
+  badges: () => request<BadgeShelfResponse>("/auth/badges"),
 };
 
 /* ---------------------------- Guests ---------------------------- */
