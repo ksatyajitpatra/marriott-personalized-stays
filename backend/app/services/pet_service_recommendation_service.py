@@ -22,6 +22,7 @@ from app.models.pet_service import (
 )
 from app.services.guest_preference_service import (
     get_guest_record,
+    get_pet_service_categories,
     get_pet_service_radius_miles,
 )
 from app.services.llm_service import (
@@ -104,13 +105,16 @@ def _mock_recommendations(
     partners: list[PartnerResponse],
     pet: dict[str, Any] | None,
     stay_check_in: str,
+    preferred_categories: list[str],
 ) -> PetServiceRecommendationsResponse:
     """Deterministic ranking when LiteLLM is disabled or unavailable."""
     pet_name = pet.get("name", "your pet") if pet else "your pet"
-    sorted_partners = sorted(
-        partners,
-        key=lambda p: (-p.rating, p.distance_miles),
-    )[:4]
+    pool = partners
+    if preferred_categories:
+        preferred = [p for p in partners if p.category in preferred_categories]
+        if preferred:
+            pool = preferred
+    sorted_partners = sorted(pool, key=lambda p: (-p.rating, p.distance_miles))[:4]
 
     items: list[PetServiceRecommendationItem] = []
     for idx, partner in enumerate(sorted_partners, start=1):
@@ -154,6 +158,7 @@ async def _llm_recommendations(
     hotel: dict[str, Any],
     stay_check_in: str,
     stay_check_out: str,
+    preferred_categories: list[str],
 ) -> PetServiceRecommendationsResponse | None:
     """Call LiteLLM to rank partners. Returns None on failure."""
     catalog = _partner_catalog(partners)
@@ -169,12 +174,22 @@ async def _llm_recommendations(
         "for a hotel stay. Use ONLY partner_id values from the provided catalog. "
         "Output strict JSON only."
     )
+    prefs_block = ""
+    if preferred_categories:
+        labels = [
+            _CATEGORY_LABEL.get(c, c.replace("_", " ")) for c in preferred_categories
+        ]
+        prefs_block = (
+            f"Guest preferred service types (prioritize these): {', '.join(labels)}\n"
+        )
+
     user = (
         f"Guest: {guest['name']}\n"
         f"Pet: {pet_desc}\n"
         f"Hotel: {hotel['name']} in {hotel['city']}, {hotel['state']}\n"
         f"Stay: {stay_check_in} to {stay_check_out}\n"
-        f"Search radius: {radius_miles} miles from hotel\n\n"
+        f"Search radius: {radius_miles} miles from hotel\n"
+        f"{prefs_block}\n"
         f"Bookable partners catalog:\n{json.dumps(catalog, indent=2)}\n\n"
         "Respond as JSON with keys:\n"
         "- summary (1-2 warm sentences introducing the picks)\n"
@@ -262,6 +277,7 @@ async def get_pet_service_recommendations(
         )
 
     radius = get_pet_service_radius_miles(guest_id)
+    preferred_categories = get_pet_service_categories(guest_id)
     partners = get_partners_near_hotel(
         reservation.hotel_id,
         pet_only=True,
@@ -294,6 +310,7 @@ async def get_pet_service_recommendations(
         hotel=hotel,
         stay_check_in=reservation.check_in,
         stay_check_out=reservation.check_out,
+        preferred_categories=preferred_categories,
     )
     if live is not None:
         return live
@@ -304,4 +321,5 @@ async def get_pet_service_recommendations(
         partners=partners,
         pet=pet,
         stay_check_in=reservation.check_in,
+        preferred_categories=preferred_categories,
     )

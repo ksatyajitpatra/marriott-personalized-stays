@@ -31,6 +31,7 @@ export interface GuestProfile extends GuestSummary {
     local_partners_enabled: boolean;
     preference_learning_enabled: boolean;
     pet_service_radius_miles: number;
+    pet_service_categories: string[];
   };
   pets: Array<{
     id: string;

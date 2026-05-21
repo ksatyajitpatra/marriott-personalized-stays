@@ -1,11 +1,9 @@
 """Arrival Brief — pre-stay personalized 1-pager (PRD Section 5.2).
 
-Strategy:
-  1. Each demo persona has a hand-curated brief in `arrival_brief_{guest}.json`
-     that we serve directly — fast, deterministic, perfect for the demo.
-  2. Live weather (OpenWeatherMap) is overlaid onto the brief when available.
-  3. If the requested stay has no seeded brief, we fall back to an LLM-
-     generated one (or a simple stub if the LLM is disabled).
+Static narrative fields come from seeded persona briefs when available.
+Events and dining are generated at request time via LiteLLM when the guest
+has selected interests or dietary preferences; empty selections skip those
+sections entirely.
 """
 
 from __future__ import annotations
@@ -23,23 +21,22 @@ from app.models.arrival_brief import (
     BriefDining,
     BriefEvent,
 )
+from app.models.preferences import CITY_RESTAURANT_KEYS
 from app.services.eco_service import compute_eco_score
+from app.services.guest_preference_service import get_guest_record
 from app.services.llm_service import (
     LLMConfigError,
     LLMUnavailableError,
     litellm_chat,
     parse_llm_json,
 )
+from app.services.partner_service import get_partners_near_hotel
 from app.services.weather_service import get_forecast
 
 logger = logging.getLogger(__name__)
 
 
-# --- Helpers ---------------------------------------------------------------
-
-
 def _find_stay(stay_id: str) -> dict[str, Any]:
-    """Look up a stay by id from the seed file, or 404."""
     for stay in get_seed("stays"):
         if stay.get("id") == stay_id:
             return stay
@@ -47,7 +44,6 @@ def _find_stay(stay_id: str) -> dict[str, Any]:
 
 
 def _find_hotel(hotel_id: str) -> dict[str, Any]:
-    """Look up a hotel by id from the seed file."""
     for hotel in get_seed("hotels"):
         if hotel.get("id") == hotel_id:
             return hotel
@@ -55,7 +51,6 @@ def _find_hotel(hotel_id: str) -> dict[str, Any]:
 
 
 def _seeded_brief_for_guest(guest_id: str) -> dict[str, Any] | None:
-    """Return the per-persona seeded brief if one exists."""
     name = f"arrival_brief_{guest_id}"
     if has_seed(name):
         return get_seed(name)
@@ -63,7 +58,6 @@ def _seeded_brief_for_guest(guest_id: str) -> dict[str, Any] | None:
 
 
 def _eco_note(hotel: dict[str, Any]) -> str | None:
-    """Produce a 1-line eco callout if the hotel scored well."""
     eco = compute_eco_score(hotel)
     if eco.green_points_bonus <= 0:
         return None
@@ -74,51 +68,188 @@ def _eco_note(hotel: dict[str, Any]) -> str | None:
     )
 
 
-# --- LLM fallback ----------------------------------------------------------
+def _restaurant_catalog(hotel: dict[str, Any]) -> list[dict[str, Any]]:
+    if not has_seed("restaurants"):
+        return []
+    key = CITY_RESTAURANT_KEYS.get(hotel.get("city", ""), "")
+    if not key:
+        return []
+    restaurants = get_seed("restaurants").get(key, [])
+    return [
+        {
+            "restaurant_id": r.get("id"),
+            "name": r.get("name"),
+            "cuisine": r.get("cuisine"),
+            "dietary_tags": r.get("dietary_tags", []),
+            "rating": r.get("rating"),
+            "note": r.get("note"),
+        }
+        for r in restaurants
+    ]
 
 
-async def _llm_generate_brief(
+def _events_catalog(hotel: dict[str, Any]) -> list[dict[str, Any]]:
+    catalog: list[dict[str, Any]] = []
+    for event in hotel.get("community_events", []):
+        catalog.append(
+            {
+                "source": "hotel",
+                "name": event.get("name"),
+                "time": event.get("time"),
+                "location": event.get("location"),
+                "type": event.get("type"),
+            }
+        )
+    for partner in get_partners_near_hotel(hotel["id"], max_miles=5.0):
+        if partner.category == "local_experience":
+            catalog.append(
+                {
+                    "source": "partner",
+                    "name": partner.name,
+                    "type": "local_experience",
+                    "note": partner.note,
+                    "distance_miles": partner.distance_miles,
+                }
+            )
+    return catalog
+
+
+async def _llm_dining_picks(
+    *,
     stay: dict[str, Any],
     hotel: dict[str, Any],
     guest: dict[str, Any],
-) -> dict[str, Any] | None:
-    """Generate a brief via LiteLLM. Returns None if unavailable."""
-    prefs = guest.get("preferences", {})
+    dietary: list[str],
+) -> list[dict[str, Any]] | None:
+    catalog = _restaurant_catalog(hotel)
+    if not catalog:
+        return None
+
     system = (
-        "You are a knowledgeable Marriott concierge. Generate a warm, "
-        "concise pre-stay arrival brief. Output strict JSON only."
+        "You are a Marriott Bonvoy dining concierge. Pick restaurants from the "
+        "catalog that best match the guest's dietary needs. Use ONLY restaurant "
+        "names from the catalog. Output strict JSON only."
     )
     user = (
-        f"Stay: {stay['check_in']} to {stay['check_out']} at {hotel['name']} "
-        f"in {hotel['city']}, {hotel['state']}.\n"
-        f"Guest: {guest['name']}, dietary: {prefs.get('dietary', [])}, "
-        f"interests: {prefs.get('interests', [])}, "
-        f"accessibility: {prefs.get('accessibility', [])}.\n\n"
-        "Respond as JSON with keys: greeting (1 sentence), "
-        "weather_summary (1 sentence), packing_tips (3 short strings), "
-        "events (3 objects: name/date/type/why_youll_love_it), "
-        "dining (3 objects: name/cuisine/dietary_match/note), "
-        "transit (1-2 sentences), property_note (1-2 sentences)."
+        f"Guest: {guest['name']}\n"
+        f"Dietary preferences: {', '.join(dietary)}\n"
+        f"Hotel: {hotel['name']} in {hotel['city']}, {hotel['state']}\n"
+        f"Stay: {stay['check_in']} to {stay['check_out']}\n\n"
+        f"Restaurant catalog:\n{json.dumps(catalog, indent=2)}\n\n"
+        "Respond as JSON with key dining (array of 3 objects): "
+        "name, cuisine, dietary_match (how it fits their prefs), note (≤30 words)."
     )
+
     try:
         raw = await litellm_chat(
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-            max_tokens=900,
+            max_tokens=700,
             response_format={"type": "json_object"},
         )
-    except LLMConfigError:
+        parsed = parse_llm_json(raw)
+    except (LLMConfigError, LLMUnavailableError) as exc:
+        logger.warning("LiteLLM dining picks failed: %s", exc)
         return None
-    except LLMUnavailableError as exc:
-        logger.warning("LiteLLM brief failed: %s", exc)
+    except json.JSONDecodeError:
+        logger.warning("LiteLLM dining picks returned non-JSON")
         return None
 
+    return [d for d in parsed.get("dining", []) if _is_dining(d)]
+
+
+async def _llm_nearby_events(
+    *,
+    stay: dict[str, Any],
+    hotel: dict[str, Any],
+    guest: dict[str, Any],
+    interests: list[str],
+) -> list[dict[str, Any]] | None:
+    catalog = _events_catalog(hotel)
+
+    system = (
+        "You are a Marriott Bonvoy local experiences concierge. Recommend events "
+        "during the guest's stay that match their interests. Prefer catalog items "
+        "when relevant; you may suggest realistic nearby events in the same city. "
+        "Output strict JSON only."
+    )
+    catalog_block = (
+        f"Event catalog:\n{json.dumps(catalog, indent=2)}\n\n"
+        if catalog
+        else ""
+    )
+    user = (
+        f"Guest: {guest['name']}\n"
+        f"Interests: {', '.join(interests)}\n"
+        f"Hotel: {hotel['name']} in {hotel['city']}, {hotel['state']}\n"
+        f"Stay: {stay['check_in']} to {stay['check_out']}\n\n"
+        f"{catalog_block}"
+        "Respond as JSON with key events (array of 3 objects): "
+        "name, date (YYYY-MM-DD within stay), type (interest tag), "
+        "why_youll_love_it (≤35 words, tie to their interests)."
+    )
+
     try:
-        return parse_llm_json(raw)
-    except json.JSONDecodeError:
+        raw = await litellm_chat(
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            max_tokens=700,
+            response_format={"type": "json_object"},
+        )
+        parsed = parse_llm_json(raw)
+    except (LLMConfigError, LLMUnavailableError) as exc:
+        logger.warning("LiteLLM nearby events failed: %s", exc)
         return None
+    except json.JSONDecodeError:
+        logger.warning("LiteLLM nearby events returned non-JSON")
+        return None
+
+    return [e for e in parsed.get("events", []) if _is_event(e)]
+
+
+def _mock_dining_from_catalog(
+    dietary: list[str], hotel: dict[str, Any]
+) -> list[dict[str, Any]]:
+    catalog = _restaurant_catalog(hotel)
+    dietary_set = set(dietary)
+    matched = [
+        r
+        for r in catalog
+        if dietary_set.intersection(set(r.get("dietary_tags", [])))
+        or any(d.replace("_", " ") in " ".join(r.get("dietary_tags", [])) for d in dietary)
+    ]
+    picks = matched[:3] if matched else catalog[:3]
+    return [
+        {
+            "name": r["name"],
+            "cuisine": r["cuisine"],
+            "dietary_match": f"Matches your {', '.join(dietary)} preferences",
+            "note": r.get("note", ""),
+        }
+        for r in picks
+    ]
+
+
+def _mock_events_from_catalog(
+    interests: list[str], hotel: dict[str, Any], stay: dict[str, Any]
+) -> list[dict[str, Any]]:
+    catalog = _events_catalog(hotel)
+    interest_set = set(interests)
+    matched = [e for e in catalog if e.get("type") in interest_set]
+    picks = matched[:3] if matched else catalog[:3]
+    return [
+        {
+            "name": e["name"],
+            "date": stay["check_in"],
+            "type": e.get("type", "local"),
+            "why_youll_love_it": f"A great fit for your interest in {', '.join(interests)}.",
+        }
+        for e in picks
+    ]
 
 
 def _stub_brief(
@@ -126,7 +257,6 @@ def _stub_brief(
     hotel: dict[str, Any],
     guest: dict[str, Any],
 ) -> dict[str, Any]:
-    """Last-resort deterministic brief when no seed and no LLM."""
     return {
         "greeting": f"Welcome, {guest['name'].split()[0]} — we can't wait to host you at {hotel['name']}.",
         "weather_summary": f"Your forecast for {hotel['city']} is in the panel above.",
@@ -135,57 +265,56 @@ def _stub_brief(
             "Comfortable walking shoes for exploring",
             "Reusable water bottle — refill stations on property",
         ],
-        "events": [],
-        "dining": [],
         "transit": f"Your hotel is at {hotel['address']}. Concierge can advise on the fastest route from your arrival point.",
         "property_note": "Your stay includes mobile check-in and digital key — skip the front desk if you'd like.",
     }
 
 
-# --- Public entry point ----------------------------------------------------
-
-
 async def get_arrival_brief(stay_id: str) -> ArrivalBriefResponse:
-    """Return the arrival brief for a given stay.
-
-    Args:
-        stay_id: The stay/reservation id (e.g. 'stay-alex-001').
-
-    Returns:
-        Fully populated `ArrivalBriefResponse` with weather, dining, etc.
-
-    Raises:
-        HTTPException: 404 if the stay isn't found.
-    """
+    """Return the arrival brief for a given stay."""
     stay = _find_stay(stay_id)
     hotel = _find_hotel(stay["hotel_id"])
+    guest = get_guest_record(stay["guest_id"]) or {"name": "Guest", "preferences": {}}
+    prefs = guest.get("preferences", {})
 
-    # Resolve the matching guest record (for personalization).
-    guest = next(
-        (g for g in get_seed("guests") if g["id"] == stay["guest_id"]),
-        {"name": "Guest", "preferences": {}},
-    )
+    dietary: list[str] = prefs.get("dietary") or []
+    interests: list[str] = prefs.get("interests") or []
 
-    # Prefer the seeded brief if the guest+stay match, else LLM, else stub.
     seeded = _seeded_brief_for_guest(stay["guest_id"])
-    source: str
-    body: dict[str, Any]
     if seeded and seeded.get("stay_id") == stay_id:
         body = seeded
-        source = "seed"
+        base_source = "seed"
     else:
-        llm = await _llm_generate_brief(stay, hotel, guest)
-        if llm is not None:
-            body = llm
-            source = "litellm"
-        else:
-            body = _stub_brief(stay, hotel, guest)
-            source = "mock_llm"
+        body = _stub_brief(stay, hotel, guest)
+        base_source = "mock_llm"
 
-    # Always overlay live weather (with mock fallback).
+    llm_used = False
+    events: list[dict[str, Any]] = []
+    dining: list[dict[str, Any]] = []
+
+    if interests:
+        llm_events = await _llm_nearby_events(
+            stay=stay, hotel=hotel, guest=guest, interests=interests
+        )
+        if llm_events:
+            events = llm_events
+            llm_used = True
+        else:
+            events = _mock_events_from_catalog(interests, hotel, stay)
+
+    if dietary:
+        llm_dining = await _llm_dining_picks(
+            stay=stay, hotel=hotel, guest=guest, dietary=dietary
+        )
+        if llm_dining:
+            dining = llm_dining
+            llm_used = True
+        else:
+            dining = _mock_dining_from_catalog(dietary, hotel)
+
+    source = "litellm" if llm_used else base_source
     forecast = await get_forecast(hotel["city"], stay["check_in"], stay["check_out"])
 
-    # Merge: seeded data wins for narrative fields; we add structured weather.
     return ArrivalBriefResponse(
         stay_id=stay_id,
         guest_id=stay["guest_id"],
@@ -199,8 +328,8 @@ async def get_arrival_brief(stay_id: str) -> ArrivalBriefResponse:
         weather_summary=body.get("weather_summary", "Forecast available below."),
         weather_forecast=forecast,
         packing_tips=list(body.get("packing_tips", [])),
-        events=[BriefEvent(**e) for e in body.get("events", []) if _is_event(e)],
-        dining=[BriefDining(**d) for d in body.get("dining", []) if _is_dining(d)],
+        events=[BriefEvent(**e) for e in events],
+        dining=[BriefDining(**d) for d in dining],
         transit=body.get("transit", ""),
         property_note=body.get("property_note", ""),
         eco_note=body.get("eco_note") or _eco_note(hotel),
@@ -208,10 +337,8 @@ async def get_arrival_brief(stay_id: str) -> ArrivalBriefResponse:
 
 
 def _is_event(e: dict[str, Any]) -> bool:
-    """Validate a raw event dict has the keys our model needs."""
     return all(k in e for k in ("name", "date", "type", "why_youll_love_it"))
 
 
 def _is_dining(d: dict[str, Any]) -> bool:
-    """Validate a raw dining dict has the keys our model needs."""
     return all(k in d for k in ("name", "cuisine", "dietary_match", "note"))
