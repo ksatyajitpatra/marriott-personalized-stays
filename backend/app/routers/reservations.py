@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 
 from app.dependencies import require_guest
 from app.models.auth import GuestSummary
+from app.models.pet_service import PetServiceRecommendationsResponse
 from app.models.reservation import (
     CreateReservationRequest,
     LookupRequest,
@@ -14,7 +15,7 @@ from app.models.reservation import (
     PetServiceBookingRequest,
     ReservationResponse,
 )
-from app.services import reservation_service
+from app.services import pet_service_recommendation_service, reservation_service
 
 router = APIRouter(prefix="/reservations", tags=["reservations"])
 
@@ -59,6 +60,20 @@ async def pay_trip(
 ) -> ReservationResponse:
     """Mark a reservation paid (mock — payload is validated but not stored)."""
     return reservation_service.process_payment(reservation_id, guest.id)
+
+
+@router.get(
+    "/{reservation_id}/pet-services/recommendations",
+    response_model=PetServiceRecommendationsResponse,
+)
+async def pet_service_recommendations(
+    reservation_id: str,
+    guest: GuestSummary = Depends(require_guest),
+) -> PetServiceRecommendationsResponse:
+    """Realtime LiteLLM-ranked pet service picks for a pet-inclusive stay."""
+    return await pet_service_recommendation_service.get_pet_service_recommendations(
+        reservation_id, guest.id
+    )
 
 
 @router.post("/{reservation_id}/pet-services", response_model=PetServiceBooking)

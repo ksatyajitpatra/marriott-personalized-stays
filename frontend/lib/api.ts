@@ -12,6 +12,7 @@ import type {
   HotelListItem,
   PartnerResponse,
   PetServiceBooking,
+  PetServiceRecommendationsResponse,
   ReservationResponse,
   SessionResponse,
 } from "./types";
@@ -214,6 +215,10 @@ export const reservations = {
     request<PetServiceBooking>(
       `/reservations/${reservationId}/pet-services/${bookingId}`,
       { method: "DELETE" },
+    ),
+  petServiceRecommendations: (reservationId: string) =>
+    request<PetServiceRecommendationsResponse>(
+      `/reservations/${reservationId}/pet-services/recommendations`,
     ),
 };
 

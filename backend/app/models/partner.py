@@ -8,12 +8,20 @@ from pydantic import BaseModel, Field
 
 ServiceModel = Literal["fixed_location", "mobile"]
 
+# In-app bookable pet services — vets and pet supply are discovery-only on the map.
 BOOKABLE_PET_CATEGORIES: frozenset[str] = frozenset(
     {
-        "vet_emergency",
         "dog_walker",
         "mobile_grooming",
+    }
+)
+
+NON_BOOKABLE_PET_CATEGORIES: frozenset[str] = frozenset(
+    {
+        "vet_emergency",
+        "vet",
         "pet_supply",
+        "dog_park",
     }
 )
 
@@ -57,8 +65,12 @@ def resolve_partner_fields(raw: dict) -> dict:
         service_model = "mobile" if category == "mobile_grooming" else "fixed_location"
 
     bookable = raw.get("bookable")
-    if bookable is None:
-        bookable = category in BOOKABLE_PET_CATEGORIES
+    if category in NON_BOOKABLE_PET_CATEGORIES or category.startswith("vet"):
+        bookable = False
+    elif category in BOOKABLE_PET_CATEGORIES:
+        bookable = True if bookable is None else bool(bookable)
+    else:
+        bookable = False
 
     return {
         **raw,

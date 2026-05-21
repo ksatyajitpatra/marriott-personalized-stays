@@ -28,6 +28,7 @@ from app.services.llm_service import (
     LLMConfigError,
     LLMUnavailableError,
     litellm_chat,
+    parse_llm_json,
 )
 from app.services.weather_service import get_forecast
 
@@ -115,7 +116,7 @@ async def _llm_generate_brief(
         return None
 
     try:
-        return json.loads(raw)
+        return parse_llm_json(raw)
     except json.JSONDecodeError:
         return None
 

@@ -1,9 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import { PawPrint, Phone, Star } from "lucide-react";
-import type { HotelDetail, PartnerResponse } from "@/lib/types";
+import { Loader2, PawPrint, Phone, Sparkles, Star } from "lucide-react";
+import type {
+  HotelDetail,
+  PartnerResponse,
+  PetServiceRecommendationItem,
+  PetServiceRecommendationsResponse,
+} from "@/lib/types";
 import { partners as partnersApi, reservations as resApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PetServiceRadiusControl } from "@/components/pet/PetServiceRadiusControl";
@@ -79,11 +84,20 @@ export function PartnerMap({
 
   const [list, setList] = useState<PartnerResponse[]>([]);
   const [filter, setFilter] = useState<Filter>(
-    hasPetStay || hotel.pet_friendly ? "pet" : "all",
+    hasPetStay ? "bookable" : hotel.pet_friendly ? "pet" : "all",
   );
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<string | null>(null);
   const [bookingPartner, setBookingPartner] = useState<PartnerResponse | null>(null);
+  const [recommendations, setRecommendations] =
+    useState<PetServiceRecommendationsResponse | null>(null);
+  const [recsLoading, setRecsLoading] = useState(false);
+
+  const recommendationByPartnerId = useMemo(() => {
+    const map = new Map<string, PetServiceRecommendationItem>();
+    recommendations?.recommendations.forEach((r) => map.set(r.partner_id, r));
+    return map;
+  }, [recommendations]);
 
   const loadPartners = useCallback(() => {
     setLoading(true);
@@ -97,6 +111,19 @@ export function PartnerMap({
   useEffect(() => {
     loadPartners();
   }, [loadPartners]);
+
+  useEffect(() => {
+    if (!reservationId || !hasPetStay) {
+      setRecommendations(null);
+      return;
+    }
+    setRecsLoading(true);
+    resApi
+      .petServiceRecommendations(reservationId)
+      .then(setRecommendations)
+      .catch(() => setRecommendations(null))
+      .finally(() => setRecsLoading(false));
+  }, [reservationId, hasPetStay, radiusMiles]);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current || mapRef.current) return;
@@ -151,7 +178,11 @@ export function PartnerMap({
     });
   }, [list, filter]);
 
-  const visible = visibleList(list, filter);
+  const visible = sortVisible(
+    visibleList(list, filter),
+    filter,
+    recommendationByPartnerId,
+  );
   const activePartner = visible.find((p) => p.id === active) ?? null;
   const bookableCount = list.filter((p) => p.bookable).length;
 
@@ -179,6 +210,32 @@ export function PartnerMap({
         <h3 className="text-[20px] font-medium text-[var(--color-bonvoy-ink)] mb-3">
           Pet + Local Partner Map
         </h3>
+
+        {hasPetStay && reservationId && (
+          <div className="mb-4 rounded-md bg-[var(--color-bonvoy-mist)] px-3 py-3">
+            {recsLoading ? (
+              <p className="text-[13px] text-[var(--color-bonvoy-muted)] inline-flex items-center gap-2">
+                <Loader2 size={14} className="animate-spin text-[var(--color-marriott-red)]" />
+                Personalizing bookable pet services…
+              </p>
+            ) : recommendations ? (
+              <>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Sparkles size={13} className="text-[var(--color-marriott-red)]" />
+                  <span className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-bonvoy-muted)]">
+                    {recommendations.generated_by === "litellm"
+                      ? "TIP.AI picks"
+                      : "Recommended"}{" "}
+                    · {recommendations.radius_miles} mi
+                  </span>
+                </div>
+                <p className="text-[13px] text-[var(--color-bonvoy-ink)] leading-relaxed">
+                  {recommendations.summary}
+                </p>
+              </>
+            ) : null}
+          </div>
+        )}
 
         {onRadiusChange && (
           <div className="mb-4 max-w-md">
@@ -234,6 +291,7 @@ export function PartnerMap({
             <PartnerCardPopup
               partner={activePartner}
               hasPetStay={hasPetStay}
+              recommendation={recommendationByPartnerId.get(activePartner.id)}
               onClose={() => setActive(null)}
               onBook={() => setBookingPartner(activePartner)}
             />
@@ -251,7 +309,9 @@ export function PartnerMap({
             </div>
           ) : (
             <ul>
-              {visible.map((p) => (
+              {visible.map((p) => {
+                const rec = recommendationByPartnerId.get(p.id);
+                return (
                 <li key={p.id} className="border-b border-[var(--color-bonvoy-rule)] last:border-b-0">
                   <button
                     onClick={() => {
@@ -261,6 +321,7 @@ export function PartnerMap({
                     className={cn(
                       "w-full text-left px-4 py-3 hover:bg-[var(--color-bonvoy-mist)] transition-colors",
                       active === p.id && "bg-[var(--color-bonvoy-mist)]",
+                      rec && "border-l-2 border-l-[var(--color-marriott-red)]",
                     )}
                   >
                     <div className="flex items-start justify-between gap-2 mb-0.5">
@@ -272,10 +333,20 @@ export function PartnerMap({
                       <span className="flex-1 min-w-0">
                         <span className="block text-[13px] font-medium text-[var(--color-bonvoy-ink)] truncate">
                           {p.name}
+                          {rec && (
+                            <span className="ml-1.5 text-[10px] uppercase tracking-[0.12em] text-[var(--color-marriott-red)]">
+                              Pick #{rec.priority}
+                            </span>
+                          )}
                         </span>
                         <span className="block text-[11px] text-[var(--color-bonvoy-muted)]">
                           {CATEGORY_LABEL[p.category] ?? p.category} · {p.distance_miles.toFixed(1)} mi
                         </span>
+                        {rec && (
+                          <span className="block text-[11px] text-[var(--color-bonvoy-ink)] mt-1 line-clamp-2">
+                            {rec.rationale}
+                          </span>
+                        )}
                         {p.service_model === "mobile" && (
                           <MobileServiceBadge className="mt-1" />
                         )}
@@ -286,7 +357,7 @@ export function PartnerMap({
                     </div>
                   </button>
                 </li>
-              ))}
+              );})}
             </ul>
           )}
         </aside>
@@ -316,11 +387,13 @@ export function PartnerMap({
 function PartnerCardPopup({
   partner,
   hasPetStay,
+  recommendation,
   onClose,
   onBook,
 }: {
   partner: PartnerResponse;
   hasPetStay: boolean;
+  recommendation?: PetServiceRecommendationItem;
   onClose: () => void;
   onBook: () => void;
 }): React.ReactElement {
@@ -373,6 +446,16 @@ function PartnerCardPopup({
       {partner.note && (
         <p className="mt-2 text-[12px] text-[var(--color-bonvoy-muted)]">{partner.note}</p>
       )}
+      {recommendation && (
+        <p className="mt-2 text-[12px] text-[var(--color-bonvoy-ink)] bg-[var(--color-bonvoy-mist)] rounded-md p-2">
+          {recommendation.rationale}
+          {recommendation.suggested_time && (
+            <span className="block mt-1 text-[var(--color-bonvoy-muted)]">
+              Suggested: {recommendation.suggested_time}
+            </span>
+          )}
+        </p>
+      )}
       {canBook ? (
         <button
           type="button"
@@ -388,6 +471,19 @@ function PartnerCardPopup({
       ) : null}
     </div>
   );
+}
+
+function sortVisible(
+  items: PartnerResponse[],
+  filter: Filter,
+  recommendations: Map<string, PetServiceRecommendationItem>,
+): PartnerResponse[] {
+  if (filter !== "bookable" || recommendations.size === 0) return items;
+  return [...items].sort((a, b) => {
+    const pa = recommendations.get(a.id)?.priority ?? 99;
+    const pb = recommendations.get(b.id)?.priority ?? 99;
+    return pa - pb;
+  });
 }
 
 function visibleList(list: PartnerResponse[], filter: Filter): PartnerResponse[] {

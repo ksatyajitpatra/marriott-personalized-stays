@@ -89,6 +89,7 @@ def _to_response(res: dict[str, Any]) -> ReservationResponse:
         confirmation_number=res["confirmation_number"],
         status=res["status"],
         has_pet=res["has_pet"],
+        pet_id=res.get("pet_id"),
         pet_fee_charged=res.get("pet_fee_charged"),
         total_usd=res["total_usd"],
         payment_status=res["payment_status"],

@@ -16,6 +16,7 @@ from app.services.llm_service import (
     LLMConfigError,
     LLMUnavailableError,
     litellm_chat,
+    parse_llm_json,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ async def _llm_hotel_content(hotel: dict[str, Any]) -> dict[str, Any] | None:
         return None
 
     try:
-        parsed = json.loads(raw)
+        parsed = parse_llm_json(raw)
     except json.JSONDecodeError:
         logger.warning("LiteLLM returned non-JSON for %s; falling back", hotel["id"])
         return None
