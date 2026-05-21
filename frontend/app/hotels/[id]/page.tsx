@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Calendar, ChevronLeft, MapPin, PawPrint, Star } from "lucide-react";
 import { hotels as hotelsApi } from "@/lib/api";
-import { formatUsd } from "@/lib/utils";
+import { formatUsd, cityHeroImage } from "@/lib/utils";
 import { EcoScoreDetail } from "@/components/eco/EcoScoreDetail";
 import { PartnerMapSection } from "@/components/partners/PartnerMapSection";
 
@@ -28,7 +28,7 @@ export default async function HotelDetailPage({
       {/* Hero */}
       <section
         className="relative h-[420px] md:h-[520px] bg-cover bg-center"
-        style={{ backgroundImage: `url(${hotel.image_url})` }}
+        style={{ backgroundImage: `url(${hotel.image_url}), url(${cityHeroImage(hotel.city)})` }}
         aria-hidden
       >
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />

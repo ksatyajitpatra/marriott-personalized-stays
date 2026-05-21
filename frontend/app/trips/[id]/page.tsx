@@ -30,7 +30,7 @@ import type {
   ReservationResponse,
   WeatherDay,
 } from "@/lib/types";
-import { formatDate, formatShortDate } from "@/lib/utils";
+import { formatDate, formatShortDate, cityHeroImage } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { useProfileStore } from "@/lib/profile-store";
 import { PetServiceBookingList } from "@/components/pet/PetServiceBookingList";
@@ -150,7 +150,7 @@ export default function TripDetailPage({
         <section className="bg-white border border-[var(--color-bonvoy-rule)] rounded-lg overflow-hidden mb-8">
           <div
             className="h-48 md:h-64 bg-cover bg-center"
-            style={{ backgroundImage: `url(${reservation.hotel_image_url})` }}
+            style={{ backgroundImage: `url(${reservation.hotel_image_url}), url(${cityHeroImage(reservation.hotel_city)})` }}
             aria-hidden
           />
           <div className="p-6 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4 md:items-end">

@@ -14,7 +14,7 @@ import {
 import { reservations as resApi } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import type { ReservationResponse } from "@/lib/types";
-import { formatDate, formatUsd, cn } from "@/lib/utils";
+import { formatDate, formatUsd, cn, cityHeroImage } from "@/lib/utils";
 
 const STATUS_LABEL: Record<ReservationResponse["status"], string> = {
   pending_payment: "Pending payment",
@@ -145,7 +145,7 @@ function TripCard({
     >
       <div
         className="aspect-[4/3] md:aspect-auto md:h-full bg-cover bg-center"
-        style={{ backgroundImage: `url(${r.hotel_image_url})` }}
+        style={{ backgroundImage: `url(${r.hotel_image_url}), url(${cityHeroImage(r.hotel_city)})` }}
         aria-hidden
       />
       <div className="px-2 md:px-4 py-5 min-w-0">

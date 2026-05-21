@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PawPrint, Star } from "lucide-react";
 import type { HotelListItem } from "@/lib/types";
-import { formatUsd } from "@/lib/utils";
+import { formatUsd, cityHeroImage } from "@/lib/utils";
 import { EcoScoreRing } from "@/components/eco/EcoScoreRing";
 
 interface HotelCardProps {
@@ -25,7 +25,7 @@ export function HotelCard({
       >
         <div
           className="aspect-[4/3] md:aspect-auto md:h-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${hotel.image_url})` }}
+          style={{ backgroundImage: `url(${hotel.image_url}), url(${cityHeroImage(hotel.city)})` }}
           aria-hidden
         />
         <div className="px-1 md:px-2 py-5 min-w-0">
@@ -89,7 +89,7 @@ export function HotelCard({
       <div className="relative aspect-[4/3] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center group-hover:scale-[1.03] transition-transform duration-500"
-          style={{ backgroundImage: `url(${hotel.image_url})` }}
+          style={{ backgroundImage: `url(${hotel.image_url}), url(${cityHeroImage(hotel.city)})` }}
           aria-hidden
         />
         <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow-sm">
