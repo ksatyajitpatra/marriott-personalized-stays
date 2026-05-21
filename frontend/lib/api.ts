@@ -11,6 +11,7 @@ import type {
   HotelDetail,
   HotelListItem,
   PartnerResponse,
+  PetServiceBooking,
   ReservationResponse,
   SessionResponse,
 } from "./types";
@@ -113,6 +114,11 @@ export const auth = {
   logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
   me: () => request<SessionResponse>("/auth/me"),
   profile: () => request<GuestProfile>("/auth/profile"),
+  updatePreferences: (payload: { pet_service_radius_miles?: number }) =>
+    request<GuestProfile["preferences"]>("/auth/profile/preferences", {
+      method: "PATCH",
+      body: payload,
+    }),
 };
 
 /* ---------------------------- Guests ---------------------------- */
@@ -133,7 +139,9 @@ export interface HotelListQuery {
 
 export const hotels = {
   list: (q?: HotelListQuery) =>
-    request<HotelListItem[]>("/hotels", { query: q }),
+    request<HotelListItem[]>("/hotels", {
+      query: q as unknown as RequestOptions["query"],
+    }),
   get: (id: string) => request<HotelDetail>(`/hotels/${id}`),
   ecoScore: (id: string) =>
     request<EcoScoreResponse>(`/hotels/${id}/eco-score`),
@@ -144,13 +152,16 @@ export const hotels = {
 export interface PartnerNearbyQuery {
   hotel_id: string;
   pet_only?: boolean;
+  bookable_only?: boolean;
   max_miles?: number;
   category?: string;
 }
 
 export const partners = {
   nearby: (q: PartnerNearbyQuery) =>
-    request<PartnerResponse[]>("/partners/nearby", { query: q }),
+    request<PartnerResponse[]>("/partners/nearby", {
+      query: q as unknown as RequestOptions["query"],
+    }),
 };
 
 /* -------------------------- Reservations ------------------------ */
@@ -188,12 +199,22 @@ export const reservations = {
     }),
   bookPetService: (
     id: string,
-    payload: { partner_id: string; service_date: string; notes?: string },
+    payload: {
+      partner_id: string;
+      service_date: string;
+      service_time: string;
+      notes?: string;
+    },
   ) =>
-    request<ReservationResponse>(`/reservations/${id}/pet-services`, {
+    request<PetServiceBooking>(`/reservations/${id}/pet-services`, {
       method: "POST",
       body: { notes: "", ...payload },
     }),
+  cancelPetService: (reservationId: string, bookingId: string) =>
+    request<PetServiceBooking>(
+      `/reservations/${reservationId}/pet-services/${bookingId}`,
+      { method: "DELETE" },
+    ),
 };
 
 /* ------------------------- Arrival Brief ------------------------ */

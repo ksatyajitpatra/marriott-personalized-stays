@@ -22,7 +22,8 @@ from app.models.reservation import (
     PetServiceBookingRequest,
     ReservationResponse,
 )
-from app.services.partner_service import get_partner_by_id
+from app.services.guest_preference_service import get_pet_service_radius_miles
+from app.services.partner_service import get_partner_by_id, get_partners_near_hotel
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,10 @@ def _new_confirmation_number() -> str:
 def _to_response(res: dict[str, Any]) -> ReservationResponse:
     """Project an internal reservation dict into the API response shape."""
     hotel = _find_hotel(res["hotel_id"])
-    bookings = [PetServiceBooking(**b) for b in _pet_bookings.get(res["id"], [])]
+    bookings = [
+        PetServiceBooking(**_normalize_booking(b))
+        for b in _pet_bookings.get(res["id"], [])
+    ]
     return ReservationResponse(
         id=res["id"],
         guest_id=res["guest_id"],
@@ -227,6 +231,29 @@ def process_payment(reservation_id: str, guest_id: str) -> ReservationResponse:
     return _to_response(res)
 
 
+def _validate_service_slot(res: dict[str, Any], service_date: str) -> None:
+    """Ensure the appointment date falls within the stay."""
+    try:
+        appt = date.fromisoformat(service_date)
+        check_in = date.fromisoformat(res["check_in"])
+        check_out = date.fromisoformat(res["check_out"])
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid date: {exc}",
+        ) from exc
+    if appt < check_in or appt > check_out:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Service date must fall within your stay",
+        )
+
+
+def _normalize_booking(raw: dict[str, Any]) -> dict[str, Any]:
+    """Fill defaults for bookings created before service_time existed."""
+    return {**raw, "service_time": raw.get("service_time", "10:00")}
+
+
 def book_pet_service(
     reservation_id: str,
     guest_id: str,
@@ -261,18 +288,69 @@ def book_pet_service(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Partner is not a pet service",
         )
+    if not partner.get("bookable"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Partner is not available for in-app booking",
+        )
+
+    radius = get_pet_service_radius_miles(guest_id)
+    nearby = get_partners_near_hotel(
+        res["hotel_id"],
+        bookable_only=True,
+        max_miles=radius,
+    )
+    if not any(p.id == body.partner_id for p in nearby):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Partner is outside your {radius:g}-mile search radius",
+        )
+
+    _validate_service_slot(res, body.service_date)
 
     booking = {
         "id": f"psb-{uuid.uuid4().hex[:8]}",
         "partner_id": partner["id"],
         "partner_name": partner["name"],
         "category": partner["category"],
+        "service_model": partner.get("service_model", "fixed_location"),
         "service_date": body.service_date,
+        "service_time": body.service_time,
         "notes": body.notes,
         "status": "confirmed",
     }
     _pet_bookings.setdefault(reservation_id, []).append(booking)
     return PetServiceBooking(**booking)
+
+
+def cancel_pet_service(
+    reservation_id: str,
+    guest_id: str,
+    booking_id: str,
+) -> PetServiceBooking:
+    """Cancel a previously booked pet service."""
+    res = _reservations.get(reservation_id)
+    if not res or res["guest_id"] != guest_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Reservation not found"
+        )
+
+    bookings = _pet_bookings.get(reservation_id, [])
+    for booking in bookings:
+        if booking.get("id") != booking_id:
+            continue
+        if booking.get("status") == "cancelled":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Booking is already cancelled",
+            )
+        booking["status"] = "cancelled"
+        booking["cancelled_at"] = datetime.now(timezone.utc).isoformat()
+        return PetServiceBooking(**_normalize_booking(booking))
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Pet service booking not found"
+    )
 
 
 def find_seeded_reservation(stay_id: str) -> dict[str, Any] | None:

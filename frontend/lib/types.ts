@@ -30,6 +30,7 @@ export interface GuestProfile extends GuestSummary {
     eco_nudges_enabled: boolean;
     local_partners_enabled: boolean;
     preference_learning_enabled: boolean;
+    pet_service_radius_miles: number;
   };
   pets: Array<{
     id: string;
@@ -121,6 +122,8 @@ export interface PartnerResponse {
   hotel_id: string;
   name: string;
   category: string;
+  service_model: "fixed_location" | "mobile";
+  bookable: boolean;
   lat: number;
   lng: number;
   address: string;
@@ -133,6 +136,20 @@ export interface PartnerResponse {
   distance_miles: number;
   note: string | null;
   dietary_tags: string[];
+  service_area_miles: number | null;
+  mobile_service_note: string | null;
+}
+
+export interface PetServiceBooking {
+  id: string;
+  partner_id: string;
+  partner_name: string;
+  category: string;
+  service_model: string;
+  service_date: string;
+  service_time: string;
+  notes: string;
+  status: string;
 }
 
 export interface ReservationResponse {
@@ -152,15 +169,7 @@ export interface ReservationResponse {
   pet_fee_charged: number | null;
   total_usd: number;
   payment_status: "unpaid" | "paid";
-  pet_service_bookings: Array<{
-    id: string;
-    partner_id: string;
-    partner_name: string;
-    category: string;
-    service_date: string;
-    notes: string;
-    status: string;
-  }>;
+  pet_service_bookings: PetServiceBooking[];
 }
 
 export interface BriefEvent {

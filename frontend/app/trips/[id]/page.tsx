@@ -21,15 +21,20 @@ import {
 import {
   ApiError,
   arrivalBrief,
+  hotels as hotelsApi,
   reservations as resApi,
 } from "@/lib/api";
 import type {
   ArrivalBriefResponse,
+  HotelDetail,
   ReservationResponse,
   WeatherDay,
 } from "@/lib/types";
 import { formatDate, formatShortDate } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
+import { useProfileStore } from "@/lib/profile-store";
+import { PetServiceBookingList } from "@/components/pet/PetServiceBookingList";
+import { PartnerMap } from "@/components/partners/PartnerMap";
 
 const ICONS: Record<WeatherDay["icon"], React.ReactNode> = {
   sun: <Sun size={20} />,
@@ -47,9 +52,13 @@ export default function TripDetailPage({
   const router = useRouter();
   const guest = useAuthStore((s) => s.guest);
   const hydrated = useAuthStore((s) => s.hydrated);
+  const radiusMiles = useProfileStore((s) => s.radiusMiles);
+  const loadProfile = useProfileStore((s) => s.loadProfile);
+  const setRadiusMiles = useProfileStore((s) => s.setRadiusMiles);
 
   const [id, setId] = useState<string | null>(null);
   const [reservation, setReservation] = useState<ReservationResponse | null>(null);
+  const [hotel, setHotel] = useState<HotelDetail | null>(null);
   const [brief, setBrief] = useState<ArrivalBriefResponse | null>(null);
   const [error, setError] = useState<"unauthorized" | "notfound" | "other" | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,12 +73,25 @@ export default function TripDetailPage({
       router.replace(`/sign-in?next=/trips/${id}`);
       return;
     }
+    void loadProfile();
+  }, [guest, hydrated, id, loadProfile, router]);
+
+  async function reloadTrip(tripId: string): Promise<void> {
+    const r = await resApi.get(tripId);
+    setReservation(r);
+  }
+
+  useEffect(() => {
+    if (!hydrated || !id) return;
+    if (!guest) return;
     setLoading(true);
     setError(null);
     (async () => {
       try {
         const r = await resApi.get(id);
         setReservation(r);
+        const h = await hotelsApi.get(r.hotel_id).catch(() => null);
+        setHotel(h);
         const b = await arrivalBrief.get(id).catch(() => null);
         setBrief(b);
       } catch (err) {
@@ -335,6 +357,31 @@ export default function TripDetailPage({
               </section>
             )}
           </>
+        )}
+
+        <PetServiceBookingList
+          bookings={reservation.pet_service_bookings}
+          reservationId={reservation.id}
+          onCancel={async (bookingId) => {
+            await resApi.cancelPetService(reservation.id, bookingId);
+            await reloadTrip(reservation.id);
+          }}
+        />
+
+        {reservation.has_pet && hotel && (
+          <section className="mb-8">
+            <PartnerMap
+              hotel={hotel}
+              reservationId={reservation.id}
+              hasPetStay={reservation.has_pet}
+              radiusMiles={radiusMiles}
+              stayCheckIn={reservation.check_in}
+              stayCheckOut={reservation.check_out}
+              onRadiusChange={(m) => void setRadiusMiles(m)}
+              onServiceBooked={() => void reloadTrip(reservation.id)}
+              defaultServiceDate={reservation.check_in}
+            />
+          </section>
         )}
       </div>
     </div>

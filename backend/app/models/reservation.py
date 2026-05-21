@@ -5,6 +5,9 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
+TIME_PATTERN = r"^([01][0-9]|2[0-3]):[0-5][0-9]$"
+
+
 class CreateReservationRequest(BaseModel):
     """Booking payload from `POST /reservations`."""
 
@@ -40,6 +43,10 @@ class PetServiceBookingRequest(BaseModel):
 
     partner_id: str
     service_date: str = Field(description="ISO date YYYY-MM-DD")
+    service_time: str = Field(
+        description="Local appointment time HH:MM (24-hour)",
+        pattern=TIME_PATTERN,
+    )
     notes: str = ""
 
 
@@ -50,7 +57,9 @@ class PetServiceBooking(BaseModel):
     partner_id: str
     partner_name: str
     category: str
+    service_model: str = "fixed_location"
     service_date: str
+    service_time: str = Field(default="10:00", pattern=TIME_PATTERN)
     notes: str
     status: str = Field(description="confirmed | cancelled")
 

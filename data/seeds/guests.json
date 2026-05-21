@@ -15,7 +15,8 @@
       "arrival_brief_enabled": true,
       "eco_nudges_enabled": true,
       "local_partners_enabled": true,
-      "preference_learning_enabled": false
+      "preference_learning_enabled": false,
+      "pet_service_radius_miles": 10
     },
     "accessibility_mode": {
       "high_contrast": false,
@@ -42,7 +43,8 @@
       "arrival_brief_enabled": true,
       "eco_nudges_enabled": false,
       "local_partners_enabled": true,
-      "preference_learning_enabled": true
+      "preference_learning_enabled": true,
+      "pet_service_radius_miles": 10
     },
     "accessibility_mode": {
       "high_contrast": false,
@@ -78,7 +80,8 @@
       "arrival_brief_enabled": true,
       "eco_nudges_enabled": true,
       "local_partners_enabled": true,
-      "preference_learning_enabled": false
+      "preference_learning_enabled": false,
+      "pet_service_radius_miles": 10
     },
     "accessibility_mode": {
       "high_contrast": false,

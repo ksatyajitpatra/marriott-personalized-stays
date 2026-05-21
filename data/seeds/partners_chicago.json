@@ -46,5 +46,25 @@
     "pet_relevant": true,
     "distance_km": 0.2,
     "note": "Hotel pickup. 30-min walks from $28."
+  },
+  {
+    "id": "partner-chi-004",
+    "hotel_id": "marriott-chicago-magnificent-mile",
+    "name": "Lakefront Mobile Pet Spa",
+    "category": "mobile_grooming",
+    "service_model": "mobile",
+    "bookable": true,
+    "lat": 41.8902,
+    "lng": -87.6245,
+    "address": "Mobile — hotel valet lane",
+    "phone": "+1-312-555-0299",
+    "hours": "8 AM–7 PM",
+    "rating": 4.8,
+    "is_marriott_partner": true,
+    "pet_relevant": true,
+    "distance_km": 0.1,
+    "service_area_miles": 18,
+    "mobile_service_note": "Climate-controlled grooming truck; 75-minute appointments.",
+    "note": "Book in-app. Bath & trim from $60."
   }
 ]

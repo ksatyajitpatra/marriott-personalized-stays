@@ -32,6 +32,20 @@ export function formatShortDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+/** Format HH:MM (24h) as a locale-friendly time, e.g. "2:30 PM". */
+export function formatTime(hhmm: string): string {
+  const match = /^(\d{2}):(\d{2})$/.exec(hhmm);
+  if (!match) return hhmm;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const d = new Date();
+  d.setHours(hours, minutes, 0, 0);
+  return d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function ecoColorVar(color: "green" | "yellow" | "red"): string {
   return `var(--color-eco-${color})`;
 }

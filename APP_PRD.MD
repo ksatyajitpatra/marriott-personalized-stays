@@ -239,7 +239,9 @@ share one configurable radius:
 - If the guest has no pet on the reservation, partner pins remain visible for
   discovery but **"Book" is hidden** — show copy: "Add a pet to this stay to book services"
 - Booked services appear on the stay detail under `pet_service_bookings[]`
-  (service date, provider, status)
+  (service date, **time**, provider, status)
+- Guests pick **date + time** when booking; appointment must fall within check-in → check-out
+- Guests may **cancel** a confirmed booking in-app; status becomes `cancelled` (Associate Effort Delta ≤ 0)
 
 **Service provider types:**
 
@@ -289,7 +291,8 @@ Categories shown on interactive Mapbox map:
 - Tap a pin → partner card: name, distance from hotel, hours, rating, service model badge
   (`Fixed location` | `Mobile — comes to you`), "Get Directions" / **"Book"**
 - **"Book"** only shown for `bookable: true` pet partners when the active stay includes a pet;
-  opens in-app `PetServiceBookingSheet` (date picker + notes) → `POST /reservations/{id}/pet-services`
+  opens in-app `PetServiceBookingSheet` (date + **time** pickers, notes) → `POST /reservations/{id}/pet-services`
+- Confirmed bookings show **Cancel booking** on the stay detail → `DELETE /reservations/{id}/pet-services/{booking_id}`
 - Partners shown with "Marriott Partner" badge if verified
 
 **Data Sources:**
@@ -305,8 +308,8 @@ Categories shown on interactive Mapbox map:
 - `PetFriendlyBadge` — on hotel search card when pet profile active
 - `PetServiceRadiusControl` — profile + map slider (1–50 mi, default 10)
 - `MobileServiceBadge` — "Comes to you" pill on mobile provider cards
-- `PetServiceBookingSheet` — book flow: date, notes, confirm (pet stay required)
-- `PetServiceBookingList` — booked services on stay / trip detail
+- `PetServiceBookingSheet` — book flow: date, **time**, notes, confirm (pet stay required)
+- `PetServiceBookingList` — booked services on stay / trip detail with **cancel** action
 
 ---
 
@@ -507,7 +510,8 @@ Extends Section 5.3 — each partner pin:
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/partners/nearby?hotel_id=…&max_miles=10&pet_only=true` | Uses guest radius; filter bookable in UI |
-| POST | `/reservations/{id}/pet-services` | Requires `has_pet: true` on reservation |
+| POST | `/reservations/{id}/pet-services` | Body: `partner_id`, `service_date`, `service_time` (HH:MM), `notes`; requires `has_pet` |
+| DELETE | `/reservations/{id}/pet-services/{booking_id}` | Cancels a confirmed booking (status → `cancelled`) |
 
 ---
 
@@ -561,7 +565,7 @@ Extends Section 5.3 — each partner pin:
 | Arrival Brief | **−2** | Reduces concierge calls for weather/event/transit questions |
 | Local Partner Map | **−1** | Reduces "what's nearby?" front desk questions |
 | Pet Booking | **0** | Pet fee + policy shown at booking; no surprise check-in conversation |
-| Pet Service Booking | **0** | Fully self-serve; mobile providers meet guest at hotel — no front-desk coordination |
+| Pet Service Booking | **0** | Fully self-serve book + cancel; mobile providers meet guest at hotel — no front-desk coordination |
 | User Preferences | **0** | Stored digitally; reduces manual preference note-taking |
 
 ---
@@ -639,10 +643,12 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] Partner seed data (NYC, DC, Chicago)
 - [x] Backend endpoint `GET /partners/nearby` with pet/category/distance filters (`max_miles`, default 10)
 - [x] Pet service booking endpoint `POST /reservations/{id}/pet-services` (requires `has_pet` on reservation)
-- [ ] Guest-configurable pet service radius (`pet_service_radius_miles`, default 10 mi) in profile + map UI
-- [ ] Mobile provider support in seed data (`service_model: mobile`, `mobile_grooming` category)
-- [ ] `PetServiceBookingSheet` + booked services list on stay detail (frontend)
-- [ ] `MobileServiceBadge` + hide Book CTA when stay has no pet (frontend)
+- [x] Guest-configurable pet service radius (`pet_service_radius_miles`, default 10 mi) in profile + map UI
+- [x] Mobile provider support in seed data (`service_model: mobile`, `mobile_grooming` category)
+- [x] `PetServiceBookingSheet` + booked services list on stay detail (frontend)
+- [x] Date + time selection on pet service booking (frontend + backend)
+- [x] Cancel pet service booking (`DELETE /reservations/{id}/pet-services/{booking_id}`)
+- [x] `MobileServiceBadge` + hide Book CTA when stay has no pet (frontend)
 - [x] Category filter chips (frontend) — All / Pet / Dining / Experiences
 - [x] PartnerCard bottom sheet (frontend) — popup card on marker click + sidebar list
 - [ ] PetProfileForm in booking + profile (frontend)

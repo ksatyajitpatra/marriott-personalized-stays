@@ -35,6 +35,14 @@ class SessionResponse(BaseModel):
     guest: GuestSummary | None = None
 
 
+class UpdatePreferencesRequest(BaseModel):
+    """Partial preference updates from the profile UI."""
+
+    pet_service_radius_miles: float | None = Field(
+        default=None, ge=1, le=50, description="Pet service search radius in miles"
+    )
+
+
 def build_guest_summary(guest: dict[str, Any]) -> GuestSummary:
     """Project a raw guest seed dict into the public summary shape.
 
