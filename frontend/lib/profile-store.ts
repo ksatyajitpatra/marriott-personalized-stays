@@ -6,18 +6,28 @@ import type { GuestProfile } from "./types";
 
 const DEFAULT_RADIUS = 10;
 
+export type PreferenceUpdate = Partial<
+  Pick<
+    GuestProfile["preferences"],
+    "dietary" | "interests" | "pet_service_categories" | "pet_service_radius_miles"
+  >
+>;
+
 interface ProfileState {
   profile: GuestProfile | null;
   radiusMiles: number;
   loading: boolean;
+  saving: boolean;
   loadProfile: () => Promise<void>;
   setRadiusMiles: (miles: number) => Promise<void>;
+  updatePreferences: (updates: PreferenceUpdate) => Promise<void>;
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   radiusMiles: DEFAULT_RADIUS,
   loading: false,
+  saving: false,
 
   loadProfile: async () => {
     set({ loading: true });
@@ -33,13 +43,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  setRadiusMiles: async (miles: number) => {
-    const clamped = Math.min(50, Math.max(1, miles));
-    set({ radiusMiles: clamped });
+  updatePreferences: async (updates: PreferenceUpdate) => {
+    set({ saving: true });
     try {
-      const prefs = await api.auth.updatePreferences({
-        pet_service_radius_miles: clamped,
-      });
+      const prefs = await api.auth.updatePreferences(updates);
       const profile = get().profile;
       if (profile) {
         set({
@@ -47,11 +54,17 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             ...profile,
             preferences: { ...profile.preferences, ...prefs },
           },
-          radiusMiles: prefs.pet_service_radius_miles ?? clamped,
+          radiusMiles: prefs.pet_service_radius_miles ?? get().radiusMiles,
         });
       }
-    } catch {
-      /* keep optimistic local value */
+    } finally {
+      set({ saving: false });
     }
+  },
+
+  setRadiusMiles: async (miles: number) => {
+    const clamped = Math.min(50, Math.max(1, miles));
+    set({ radiusMiles: clamped });
+    await get().updatePreferences({ pet_service_radius_miles: clamped });
   },
 }));

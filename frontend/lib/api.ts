@@ -115,7 +115,12 @@ export const auth = {
   logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST" }),
   me: () => request<SessionResponse>("/auth/me"),
   profile: () => request<GuestProfile>("/auth/profile"),
-  updatePreferences: (payload: { pet_service_radius_miles?: number }) =>
+  updatePreferences: (payload: {
+    dietary?: string[];
+    interests?: string[];
+    pet_service_categories?: string[];
+    pet_service_radius_miles?: number;
+  }) =>
     request<GuestProfile["preferences"]>("/auth/profile/preferences", {
       method: "PATCH",
       body: payload,

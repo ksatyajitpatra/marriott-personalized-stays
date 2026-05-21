@@ -38,6 +38,9 @@ class SessionResponse(BaseModel):
 class UpdatePreferencesRequest(BaseModel):
     """Partial preference updates from the profile UI."""
 
+    dietary: list[str] | None = None
+    interests: list[str] | None = None
+    pet_service_categories: list[str] | None = None
     pet_service_radius_miles: float | None = Field(
         default=None, ge=1, le=50, description="Pet service search radius in miles"
     )

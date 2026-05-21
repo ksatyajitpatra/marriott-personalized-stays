@@ -146,42 +146,55 @@ An LLM-generated, personalized 1-page briefing sent (or viewable in-app) 48 hour
 | Section | Data Source (Production) | Mock/Live for Demo |
 |---|---|---|
 | Weather forecast for stay dates | OpenWeatherMap API | **LIVE** (free tier) |
-| Packing tips (weather-derived) | LLM inference | LLM or mock |
-| Local events during stay | Ticketmaster API / LLM search | Mock JSON or live |
-| Restaurant recs filtered by dietary pref | Opera PMS F&B data + partner DB | Mock JSON seeded per city |
-| Transit from arrival airport | Google Maps / Citymapper API | Mock static data |
-| Property accessibility notes | Opera PMS / GXP guest notes | Mock per hotel |
+| Packing tips (weather-derived) | LLM inference | Seeded persona brief |
+| Local events during stay ("Happening nearby") | Ticketmaster API / LLM search | **LiteLLM** when `interests[]` set; hidden if empty |
+| Restaurant recs ("Dining picks") | Opera PMS F&B data + partner DB | **LiteLLM** + `restaurants.json` when `dietary[]` set; hidden if empty |
+| Transit from arrival airport | Google Maps / Citymapper API | Seeded persona brief |
+| Property accessibility notes | Opera PMS / GXP guest notes | Seeded persona brief |
 | Sunrise/sunset times | Astronomy API (free) | **LIVE** |
-| Pet-friendly tips (if dog profile) | Property pet policy data | Mock per hotel |
+| Pet-friendly tips (if dog profile) | Property pet policy data | Pet services on trip map (separate feature) |
 
 **Personalization Engine:**
-- Reads from `guest.preferences` (set in user profile)
-- Dietary filter: vegetarian / vegan / halal / kosher / gluten-free
-- Interest tags: culture, outdoor, food, nightlife, sports, sustainability
-- Accessibility: mobility, hearing, vision, sensory sensitivity
-- Pet: dog name, breed, weight
+- Reads from `guest.preferences` (set in user profile — see Section 6.1)
+- **Dynamic sections (LiteLLM at request time):**
+  - **Happening nearby** (`events`) — generated only when the guest has selected **travel interests**; omitted from the brief when `interests[]` is empty
+  - **Dining picks** (`dining`) — generated only when the guest has selected **dietary preferences**; omitted when `dietary[]` is empty
+- **Static sections (seeded persona brief):** greeting, weather summary, packing tips, transit, property note, eco note — served from `arrival_brief_{guest}.json` when available
+- Live weather is always overlaid from OpenWeatherMap (mock fallback)
+- Interest tags used for events: `culture`, `food`, `outdoor`, `nightlife`, `sustainability`, `wellness`
+- Dietary tags used for dining: `vegetarian`, `vegan`, `halal`, `kosher`, `gluten_free`, `nut_allergy`
+- Accessibility prefs reserved for future brief sections (`mobility`, `hearing`, `vision`, `sensory`)
+- Pet context (name, breed, weight) used in pet service recommendations on trip detail, not in the arrival brief body
+
+**Preference-empty rule:** If a preference dimension has no selections, that dimension is **not** sent to the LLM and the corresponding trip-detail section is **hidden** (not generic filler content).
+
+**LLM data catalogs (mock demo):**
+- Dining: `restaurants.json` keyed by city (`new_york`, `washington_dc`, `chicago`, `miami`)
+- Events: hotel `community_events[]` + nearby `local_experience` partners from `partners_{city}.json`
 
 **Consent Toggle:**
 - In user profile settings: "Arrival Brief" toggle (enabled by default, can disable)
 - Data used: stay dates, property location, saved preferences
 - No location tracking, no browsing history
 
-**LLM Prompt Strategy:**
-```
-System: You are a knowledgeable Marriott concierge. Generate a warm, 
-concise arrival brief for a guest staying at {hotel_name} in {city}.
+**LLM Prompt Strategy (dynamic sections):**
 
-Context:
-- Stay: {check_in} to {check_out} ({nights} nights)
-- Weather: {weather_data}
-- Guest preferences: {dietary}, {interests}, {accessibility}
-- Local events: {events_json}
-- Restaurant options: {restaurants_json}
-
-Output a structured JSON with sections: weather_summary, packing_tips, 
-events (top 3), dining (top 3 matching diet), transit, property_notes.
-Keep each section under 60 words.
+*Happening nearby* — when `interests[]` is non-empty:
 ```
+System: Marriott concierge. Pick events during the stay that match guest interests.
+Context: stay dates, hotel city, interests[], event catalog (hotel community_events + local experiences)
+Output JSON: { events: [{ name, date, type, why_youll_love_it }] } — top 3
+```
+
+*Dining picks* — when `dietary[]` is non-empty:
+```
+System: Marriott dining concierge. Pick restaurants from catalog matching dietary needs.
+Context: stay dates, hotel city, dietary[], restaurant catalog (restaurants.json for city)
+Output JSON: { dining: [{ name, cuisine, dietary_match, note }] } — top 3
+```
+
+Falls back to deterministic catalog filtering when `USE_MOCK_LLM=true` or the LiteLLM call fails.
+Responses may arrive markdown-wrapped; backend strips fences via `parse_llm_json()` before parsing.
 
 **UI Components:**
 - `ArrivalBriefCard` — beautiful card in "My Stays" view, 48h before check-in
@@ -226,8 +239,10 @@ share one configurable radius:
 | Setting | Default | Range | Storage |
 |---|---|---|---|
 | Pet service search radius | **10 miles** | 1–50 miles | `guest.preferences.pet_service_radius_miles` |
+| Preferred pet service types | *(none)* | multi-select | `guest.preferences.pet_service_categories[]` |
 
-- Radius is **guest-configurable** in Profile → Pet Preferences (slider + numeric input)
+- Radius is **guest-configurable** in Profile → Pet Service Preferences (slider + numeric input)
+- **Service type preferences** (optional): `dog_walker`, `mobile_grooming` — when selected, LiteLLM ranking on the partner map prioritizes those categories; when empty, all bookable partners are ranked without type bias
 - Map and list views pass the guest's radius to `GET /partners/nearby?max_miles=…`
 - Partners outside the radius are hidden from the **bookable pet services** list;
   the broader neighborhood map may still show non-bookable pins (restaurants, EV, etc.)
@@ -242,7 +257,8 @@ share one configurable radius:
   (service date, **time**, provider, status)
 - **Pet + Local Partner Map** loads **`GET /reservations/{id}/pet-services/recommendations`**
   on mount for pet stays — a **realtime LiteLLM call** (TIP.AI proxy) ranks bookable
-  partners from seed data with personalized rationale inside the map section; falls back to mock ranking when
+  partners from seed data with personalized rationale inside the map section; incorporates
+  `pet_service_categories[]` when set; falls back to mock ranking when
   `USE_MOCK_LLM=true` or the call fails
 - Guests pick **date + time** when booking; appointment must fall within check-in → check-out
 - Guests may **cancel** a confirmed booking in-app; status becomes `cancelled` (Associate Effort Delta ≤ 0)
@@ -309,6 +325,7 @@ Categories shown on interactive Mapbox map:
 - `PetProfileForm` — in booking flow and user profile
 - `PetFriendlyBadge` — on hotel search card when pet profile active
 - `PetServiceRadiusControl` — profile + map slider (1–50 mi, default 10)
+- `PreferenceChips` — reusable multi-select chip control for profile preference sections
 - `MobileServiceBadge` — "Comes to you" pill on mobile provider cards
 - `PetServiceBookingSheet` — book flow: date, **time**, notes, confirm (pet stay required)
 - `PetServiceBookingList` — booked services on stay / trip detail with **cancel** action
@@ -323,11 +340,24 @@ Categories shown on interactive Mapbox map:
 
 **Build level:** Fully build (it's the backbone of personalization)
 
-- Dietary preferences (multi-select: vegetarian, vegan, halal, kosher, gluten-free, nut allergy)
-- Travel interests (multi-select: culture, food, outdoor, nightlife, sustainability, wellness)
-- Accessibility needs (multi-select: mobility, hearing, vision, sensory)
-- Pet profiles (add/remove pets)
-- Pet service search radius (`pet_service_radius_miles`, default **10**, range 1–50)
+**Status:** Core preference capture implemented on `/profile` — dining, interests, and pet service prefs persist via `PATCH /auth/profile/preferences` and drive dynamic LiteLLM sections on trip detail.
+
+**Profile sections (implemented):**
+
+| Section | Field | Options | Drives |
+|---|---|---|---|
+| Dining preferences | `preferences.dietary[]` | vegetarian, vegan, halal, kosher, gluten_free, nut_allergy | Arrival Brief → **Dining picks** (LiteLLM) |
+| Travel interests | `preferences.interests[]` | culture, food, outdoor, nightlife, sustainability, wellness | Arrival Brief → **Happening nearby** (LiteLLM) |
+| Pet service preferences | `preferences.pet_service_categories[]` | dog_walker, mobile_grooming | Partner map → **TIP.AI pet service picks** (LiteLLM) |
+| Pet service radius | `preferences.pet_service_radius_miles` | 1–50 mi (default 10) | Partner map discovery + bookable filter |
+
+- Multi-select chips toggle on/off; changes save immediately (optimistic UI + PATCH)
+- Empty selection = that preference dimension is ignored by LLM prompts and the related trip section is hidden
+- Runtime overrides merge over seed `guests.json` per signed-in persona (in-memory for demo)
+
+**Also on profile (seed display / future):**
+- Accessibility needs (multi-select: mobility, hearing, vision, sensory) — seed data only; UI not yet built
+- Pet profiles (read-only list from `guest.pets[]`; add/remove in booking flow — future)
 - Consent toggles:
   - Arrival Brief (on/off)
   - Local partner recommendations (on/off)
@@ -336,6 +366,17 @@ Categories shown on interactive Mapbox map:
 - Language preference
 - Bonvoy tier display + points balance (mocked)
 - Badge shelf (eco badges earned)
+
+**API:**
+
+| Method | Path | Body (partial) |
+|---|---|---|
+| GET | `/auth/profile` | — returns full guest incl. `preferences` |
+| PATCH | `/auth/profile/preferences` | `{ dietary?, interests?, pet_service_categories?, pet_service_radius_miles? }` |
+
+**Frontend:** `PreferenceChips`, `PetServiceRadiusControl`, Zustand `profile-store` (loads profile, debounced PATCH on chip change).
+
+**Trip detail refresh:** `/trips/[id]` refetches the arrival brief when `dietary` or `interests` change, and refetches pet service recommendations when radius or `pet_service_categories` change.
 
 ### 6.2 Accessibility Quick Mode
 
@@ -349,12 +390,13 @@ Categories shown on interactive Mapbox map:
 
 ### 6.3 Community Events (Hotel + City)
 
-**Build level:** Mock JSON only for demo; future LLM integration
+**Build level:** Mock JSON + **LiteLLM personalization when interests are set**
 
 - Hotel-level events: run club, coworking hours, rooftop yoga (hardcoded in hotel seed data)
 - City events: mock top 5 events per demo city
+- **Arrival Brief — Happening nearby:** when the guest selects travel interests on `/profile`, LiteLLM ranks/generates 3 events for the stay window using hotel `community_events[]` + nearby `local_experience` partners as catalog; section hidden when `interests[]` is empty
 - Shown in the Arrival Brief and in a "What's On" tab in the hotel detail page
-- **Future:** Real-time LLM search via TIP.AI or Perplexity-style live retrieval
+- **Future:** Ticketmaster Discovery API or Perplexity-style live retrieval for production
 
 ### 6.4 Interactive Local Partner Map (Nice-to-Have Enhancement)
 
@@ -410,11 +452,12 @@ App Shell (mobile-first, 390px base)
 ├── /profile                   → Guest Profile
 │   ├── LoyaltyTierCard        → tier, points, badges
 │   ├── BadgeShelf             → eco badges earned
-│   ├── PreferencesSection     → dietary, interests, accessibility
-│   ├── PetProfiles            → manage pets
-│   ├── PetServiceRadius       → default search radius (mi) for bookable pet services
-│   ├── ConsentToggles         → privacy settings
-│   └── AccessibilitySettings  → display modes
+│   ├── DiningPreferences      → dietary multi-select chips → LiteLLM dining picks
+│   ├── TravelInterests        → interests multi-select chips → LiteLLM events
+│   ├── PetServicePreferences  → service-type chips + radius slider → LiteLLM pet ranking
+│   ├── PetProfiles            → manage pets (read-only list; add in booking — future)
+│   ├── ConsentToggles         → privacy settings (future)
+│   └── AccessibilitySettings  → display modes (future)
 │
 └── /booking/:hotel_id         → Booking Flow
     ├── RoomSelection
@@ -505,9 +548,30 @@ Extends Section 5.3 — each partner pin:
 
 ```json
 "preferences": {
-  "pet_service_radius_miles": 10
+  "dietary": ["vegetarian"],
+  "interests": ["culture", "food", "sustainability"],
+  "accessibility": [],
+  "pet_service_radius_miles": 10,
+  "pet_service_categories": [],
+  "arrival_brief_enabled": true,
+  "eco_nudges_enabled": true,
+  "local_partners_enabled": true,
+  "preference_learning_enabled": false
 }
 ```
+
+| Field | Type | Notes |
+|---|---|---|
+| `dietary` | `string[]` | Allowed: `vegetarian`, `vegan`, `halal`, `kosher`, `gluten_free`, `nut_allergy` |
+| `interests` | `string[]` | Allowed: `culture`, `food`, `outdoor`, `nightlife`, `sustainability`, `wellness` |
+| `pet_service_categories` | `string[]` | Allowed: `dog_walker`, `mobile_grooming`; empty = no type bias in LLM ranking |
+| `pet_service_radius_miles` | `number` | 1–50, default 10 |
+
+**API (profile preferences):**
+
+| Method | Path | Notes |
+|---|---|---|
+| PATCH | `/auth/profile/preferences` | Partial update; merges over seed + in-memory overrides |
 
 **API (pet services):**
 
@@ -640,6 +704,8 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] Backend endpoint `GET /arrival-brief/{stay_id}` with personalized seeds for alex/jordan/sam
 - [x] ArrivalBriefCard component (frontend) — full `/trips/[id]` view
 - [x] BriefSection components (weather, events, dining, transit, eco note) (frontend)
+- [x] **Dynamic LiteLLM sections:** Happening nearby (interests-gated), Dining picks (dietary-gated); hidden when prefs empty
+- [x] Profile-driven brief refresh on trip detail when dietary/interests change
 - [ ] Consent toggle in profile (frontend)
 - [x] Dietary preference filter applied (frontend renders `dietary_match` from backend)
 
@@ -654,6 +720,7 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] Date + time selection on pet service booking (frontend + backend)
 - [x] Cancel pet service booking (`DELETE /reservations/{id}/pet-services/{booking_id}`)
 - [x] Realtime LiteLLM pet service recommendations on reservation detail (`GET .../pet-services/recommendations`)
+- [x] Pet service type preferences (`pet_service_categories[]`) influence LiteLLM ranking on partner map
 - [x] `MobileServiceBadge` + hide Book CTA when stay has no pet (frontend)
 - [x] Category filter chips (frontend) — All / Pet / Dining / Experiences
 - [x] PartnerCard bottom sheet (frontend) — popup card on marker click + sidebar list
@@ -664,8 +731,9 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] Mock auth: 3 demo personas loadable (`POST /auth/login`, session cookie)
 - [x] Persona switcher UI (frontend `/sign-in`)
 - [x] Booking flow backend (`POST /reservations`, `/payment`, `/pet-services`)
-- [x] LiteLLM client wired (`app/services/llm_service.py`)
-- [ ] User Profile page (preferences, consent, badges) (frontend)
+- [x] LiteLLM client wired (`app/services/llm_service.py`); `parse_llm_json()` for markdown-wrapped responses
+- [x] User Profile page — dining, interests, pet service prefs + radius (`/profile`, `PreferenceChips`, `PATCH /auth/profile/preferences`)
+- [ ] User Profile page — consent toggles, badges shelf, accessibility prefs UI (frontend)
 - [ ] Accessibility mode toggle (frontend, CSS only)
 - [x] Community events section (frontend `/hotels/[id]` + data already in `community_events` on each hotel)
 - [ ] Booking flow skeleton (frontend)

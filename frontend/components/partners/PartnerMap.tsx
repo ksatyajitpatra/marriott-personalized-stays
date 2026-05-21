@@ -10,6 +10,7 @@ import type {
   PetServiceRecommendationsResponse,
 } from "@/lib/types";
 import { partners as partnersApi, reservations as resApi } from "@/lib/api";
+import { useProfileStore } from "@/lib/profile-store";
 import { cn } from "@/lib/utils";
 import { PetServiceRadiusControl } from "@/components/pet/PetServiceRadiusControl";
 import { MobileServiceBadge } from "@/components/pet/MobileServiceBadge";
@@ -92,6 +93,10 @@ export function PartnerMap({
   const [recommendations, setRecommendations] =
     useState<PetServiceRecommendationsResponse | null>(null);
   const [recsLoading, setRecsLoading] = useState(false);
+  const petServiceCategories = useProfileStore(
+    (s) => s.profile?.preferences.pet_service_categories ?? [],
+  );
+  const petPrefsKey = petServiceCategories.join(",");
 
   const recommendationByPartnerId = useMemo(() => {
     const map = new Map<string, PetServiceRecommendationItem>();
@@ -123,7 +128,7 @@ export function PartnerMap({
       .then(setRecommendations)
       .catch(() => setRecommendations(null))
       .finally(() => setRecsLoading(false));
-  }, [reservationId, hasPetStay, radiusMiles]);
+  }, [reservationId, hasPetStay, radiusMiles, petPrefsKey]);
 
   useEffect(() => {
     if (!TOKEN || !containerRef.current || mapRef.current) return;

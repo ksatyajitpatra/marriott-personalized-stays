@@ -55,6 +55,10 @@ export default function TripDetailPage({
   const radiusMiles = useProfileStore((s) => s.radiusMiles);
   const loadProfile = useProfileStore((s) => s.loadProfile);
   const setRadiusMiles = useProfileStore((s) => s.setRadiusMiles);
+  const profile = useProfileStore((s) => s.profile);
+  const preferenceKey = profile
+    ? `${profile.preferences.dietary.join(",")}|${profile.preferences.interests.join(",")}`
+    : "";
 
   const [id, setId] = useState<string | null>(null);
   const [reservation, setReservation] = useState<ReservationResponse | null>(null);
@@ -106,7 +110,7 @@ export default function TripDetailPage({
         setLoading(false);
       }
     })();
-  }, [guest, hydrated, id, router]);
+  }, [guest, hydrated, id, preferenceKey, router]);
 
   if (!hydrated || loading) {
     return (

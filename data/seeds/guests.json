@@ -16,7 +16,8 @@
       "eco_nudges_enabled": true,
       "local_partners_enabled": true,
       "preference_learning_enabled": false,
-      "pet_service_radius_miles": 10
+      "pet_service_radius_miles": 10,
+      "pet_service_categories": []
     },
     "accessibility_mode": {
       "high_contrast": false,
@@ -44,7 +45,8 @@
       "eco_nudges_enabled": false,
       "local_partners_enabled": true,
       "preference_learning_enabled": true,
-      "pet_service_radius_miles": 10
+      "pet_service_radius_miles": 10,
+      "pet_service_categories": []
     },
     "accessibility_mode": {
       "high_contrast": false,
@@ -81,7 +83,8 @@
       "eco_nudges_enabled": true,
       "local_partners_enabled": true,
       "preference_learning_enabled": false,
-      "pet_service_radius_miles": 10
+      "pet_service_radius_miles": 10,
+      "pet_service_categories": []
     },
     "accessibility_mode": {
       "high_contrast": false,
