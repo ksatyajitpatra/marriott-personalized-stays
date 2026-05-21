@@ -27,6 +27,7 @@ Open http://localhost:8000/docs for the interactive OpenAPI UI.
 | POST   | `/auth/logout`                        |                               |
 | GET    | `/auth/me`                            | current session               |
 | GET    | `/auth/profile`                       | full guest profile (auth req) |
+| PATCH  | `/auth/profile/preferences`           | update pet service radius, etc. |
 | GET    | `/guests` / `/guests/{id}`            | persona browsing              |
 | GET    | `/hotels`                             | filter: `city`, `pet_friendly`, `min_eco` |
 | GET    | `/hotels/{id}`                        | detail + LLM marketing copy   |
@@ -35,7 +36,8 @@ Open http://localhost:8000/docs for the interactive OpenAPI UI.
 | GET    | `/reservations`                       | my trips (auth req)           |
 | POST   | `/reservations`                       | book a stay                   |
 | POST   | `/reservations/{id}/payment`          | mock payment                  |
-| POST   | `/reservations/{id}/pet-services`     | book a pet service            |
+| POST   | `/reservations/{id}/pet-services`     | book a pet service (date + time) |
+| DELETE | `/reservations/{id}/pet-services/{bid}` | cancel a pet service booking   |
 | GET    | `/arrival-brief/{stay_id}`            | pre-stay personalized brief   |
 
 ## Env

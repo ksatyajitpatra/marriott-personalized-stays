@@ -69,3 +69,18 @@ async def book_pet_service(
 ) -> PetServiceBooking:
     """Add a pet service booking to a reservation."""
     return reservation_service.book_pet_service(reservation_id, guest.id, body)
+
+
+@router.delete(
+    "/{reservation_id}/pet-services/{booking_id}",
+    response_model=PetServiceBooking,
+)
+async def cancel_pet_service(
+    reservation_id: str,
+    booking_id: str,
+    guest: GuestSummary = Depends(require_guest),
+) -> PetServiceBooking:
+    """Cancel a pet service booking on a reservation."""
+    return reservation_service.cancel_pet_service(
+        reservation_id, guest.id, booking_id
+    )

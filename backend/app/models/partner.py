@@ -2,7 +2,20 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+ServiceModel = Literal["fixed_location", "mobile"]
+
+BOOKABLE_PET_CATEGORIES: frozenset[str] = frozenset(
+    {
+        "vet_emergency",
+        "dog_walker",
+        "mobile_grooming",
+        "pet_supply",
+    }
+)
 
 
 class PartnerResponse(BaseModel):
@@ -13,11 +26,13 @@ class PartnerResponse(BaseModel):
     name: str
     category: str = Field(
         description=(
-            "One of: vet_emergency, dog_walker, dog_park, pet_supply, "
+            "One of: vet_emergency, dog_walker, dog_park, pet_supply, mobile_grooming, "
             "vegan_restaurant, restaurant, bike_rental, refill_station, "
             "ev_charging, local_experience"
         )
     )
+    service_model: ServiceModel = "fixed_location"
+    bookable: bool = False
     lat: float
     lng: float
     address: str
@@ -30,3 +45,23 @@ class PartnerResponse(BaseModel):
     distance_miles: float
     note: str | None = None
     dietary_tags: list[str] = Field(default_factory=list)
+    service_area_miles: float | None = None
+    mobile_service_note: str | None = None
+
+
+def resolve_partner_fields(raw: dict) -> dict:
+    """Apply PRD defaults for bookable/service_model when omitted from seed JSON."""
+    category = raw.get("category", "")
+    service_model = raw.get("service_model")
+    if service_model not in ("fixed_location", "mobile"):
+        service_model = "mobile" if category == "mobile_grooming" else "fixed_location"
+
+    bookable = raw.get("bookable")
+    if bookable is None:
+        bookable = category in BOOKABLE_PET_CATEGORIES
+
+    return {
+        **raw,
+        "service_model": service_model,
+        "bookable": bool(bookable),
+    }

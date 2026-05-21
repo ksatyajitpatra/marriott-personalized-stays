@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { PawPrint, Phone, Star } from "lucide-react";
 import type { HotelDetail, PartnerResponse } from "@/lib/types";
-import { partners as partnersApi } from "@/lib/api";
+import { partners as partnersApi, reservations as resApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { PetServiceRadiusControl } from "@/components/pet/PetServiceRadiusControl";
+import { MobileServiceBadge } from "@/components/pet/MobileServiceBadge";
+import { PetServiceBookingSheet } from "@/components/pet/PetServiceBookingSheet";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 const CATEGORY_LABEL: Record<string, string> = {
   vet_emergency: "Vet · 24h",
   dog_walker: "Dog walker",
+  mobile_grooming: "Mobile grooming",
   dog_park: "Dog park",
   pet_supply: "Pet supply",
   vegan_restaurant: "Vegan dining",
@@ -25,6 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 const CATEGORY_COLOR: Record<string, string> = {
   vet_emergency: "#A6192E",
   dog_walker: "#1f8a4c",
+  mobile_grooming: "#0f6cbf",
   dog_park: "#1f8a4c",
   pet_supply: "#7a4f1d",
   vegan_restaurant: "#1f8a4c",
@@ -35,39 +40,64 @@ const CATEGORY_COLOR: Record<string, string> = {
   local_experience: "#7a3a8e",
 };
 
-type Filter = "all" | "pet" | "dining" | "experiences";
+type Filter = "all" | "pet" | "bookable" | "dining" | "experiences";
 
 const FILTER_CATEGORIES: Record<Filter, string[]> = {
   all: [],
-  pet: ["vet_emergency", "dog_walker", "dog_park", "pet_supply"],
+  pet: ["vet_emergency", "dog_walker", "dog_park", "pet_supply", "mobile_grooming"],
+  bookable: [],
   dining: ["vegan_restaurant", "restaurant"],
   experiences: ["bike_rental", "refill_station", "ev_charging", "local_experience"],
 };
 
 interface PartnerMapProps {
   hotel: HotelDetail;
+  reservationId?: string;
+  hasPetStay?: boolean;
+  radiusMiles?: number;
+  stayCheckIn?: string;
+  stayCheckOut?: string;
+  onRadiusChange?: (miles: number) => void;
+  onServiceBooked?: () => void;
+  defaultServiceDate?: string;
 }
 
-export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
+export function PartnerMap({
+  hotel,
+  reservationId,
+  hasPetStay = false,
+  radiusMiles = 10,
+  stayCheckIn,
+  stayCheckOut,
+  onRadiusChange,
+  onServiceBooked,
+  defaultServiceDate,
+}: PartnerMapProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
 
   const [list, setList] = useState<PartnerResponse[]>([]);
-  const [filter, setFilter] = useState<Filter>(hotel.pet_friendly ? "pet" : "all");
+  const [filter, setFilter] = useState<Filter>(
+    hasPetStay || hotel.pet_friendly ? "pet" : "all",
+  );
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<string | null>(null);
+  const [bookingPartner, setBookingPartner] = useState<PartnerResponse | null>(null);
 
-  useEffect(() => {
+  const loadPartners = useCallback(() => {
     setLoading(true);
     partnersApi
-      .nearby({ hotel_id: hotel.id, max_miles: 5 })
+      .nearby({ hotel_id: hotel.id, max_miles: radiusMiles })
       .then(setList)
       .catch(() => setList([]))
       .finally(() => setLoading(false));
-  }, [hotel.id]);
+  }, [hotel.id, radiusMiles]);
 
-  // Init map only once
+  useEffect(() => {
+    loadPartners();
+  }, [loadPartners]);
+
   useEffect(() => {
     if (!TOKEN || !containerRef.current || mapRef.current) return;
     mapboxgl.accessToken = TOKEN;
@@ -81,7 +111,6 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
     map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), "top-right");
     mapRef.current = map;
 
-    // Hotel marker (Marriott red, larger)
     const hotelEl = document.createElement("div");
     hotelEl.style.cssText =
       "width:24px;height:24px;border-radius:50%;background:#A6192E;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.25);";
@@ -100,7 +129,6 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
     };
   }, [hotel.lat, hotel.lng, hotel.name]);
 
-  // Re-render partner markers whenever list/filter changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -125,6 +153,22 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
 
   const visible = visibleList(list, filter);
   const activePartner = visible.find((p) => p.id === active) ?? null;
+  const bookableCount = list.filter((p) => p.bookable).length;
+
+  async function handleBookConfirm(payload: {
+    service_date: string;
+    service_time: string;
+    notes: string;
+  }): Promise<void> {
+    if (!reservationId || !bookingPartner) return;
+    await resApi.bookPetService(reservationId, {
+      partner_id: bookingPartner.id,
+      service_date: payload.service_date,
+      service_time: payload.service_time,
+      notes: payload.notes,
+    });
+    onServiceBooked?.();
+  }
 
   return (
     <div className="bg-white border border-[var(--color-bonvoy-rule)] rounded-lg overflow-hidden">
@@ -135,8 +179,34 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
         <h3 className="text-[20px] font-medium text-[var(--color-bonvoy-ink)] mb-3">
           Pet + Local Partner Map
         </h3>
+
+        {onRadiusChange && (
+          <div className="mb-4 max-w-md">
+            <PetServiceRadiusControl
+              compact
+              value={radiusMiles}
+              onChange={onRadiusChange}
+            />
+          </div>
+        )}
+
+        {!hasPetStay && hotel.pet_friendly && (
+          <p className="text-[13px] text-[var(--color-bonvoy-muted)] mb-3 bg-[var(--color-bonvoy-mist)] rounded-md px-3 py-2">
+            Add a pet to your stay to book services ({bookableCount} bookable within{" "}
+            {radiusMiles} mi).
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-2">
-          {(["all", "pet", "dining", "experiences"] as Filter[]).map((f) => (
+          {(
+            [
+              ["all", `All (${list.length})`],
+              ["pet", "Pet"],
+              ["bookable", `Bookable (${bookableCount})`],
+              ["dining", "Dining"],
+              ["experiences", "Experiences"],
+            ] as const
+          ).map(([f, label]) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -147,13 +217,7 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
                   : "bg-white text-[var(--color-bonvoy-ink)] border-[var(--color-bonvoy-rule)] hover:border-[var(--color-bonvoy-ink)]",
               )}
             >
-              {f === "all"
-                ? `All (${list.length})`
-                : f === "pet"
-                  ? "Pet"
-                  : f === "dining"
-                    ? "Dining"
-                    : "Experiences"}
+              {label}
             </button>
           ))}
         </div>
@@ -167,49 +231,12 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
             <NoTokenFallback hotel={hotel} list={visible} />
           )}
           {activePartner && (
-            <div className="absolute left-4 bottom-4 right-4 md:right-auto md:max-w-sm bg-white rounded-lg shadow-xl border border-[var(--color-bonvoy-rule)] p-4 text-[13px]">
-              <div className="flex items-start justify-between gap-3 mb-1">
-                <div>
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-bonvoy-muted)]">
-                    {CATEGORY_LABEL[activePartner.category] ?? activePartner.category}
-                  </p>
-                  <h4 className="font-medium text-[var(--color-bonvoy-ink)] text-[15px]">
-                    {activePartner.name}
-                  </h4>
-                </div>
-                <button
-                  onClick={() => setActive(null)}
-                  className="text-[var(--color-bonvoy-muted)] hover:text-[var(--color-bonvoy-ink)]"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-              </div>
-              <p className="text-[12px] text-[var(--color-bonvoy-muted)] mb-2">
-                {activePartner.address}
-              </p>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
-                <span className="inline-flex items-center gap-1">
-                  <Star size={12} />
-                  {activePartner.rating.toFixed(1)}
-                </span>
-                <span>{activePartner.distance_miles.toFixed(1)} mi</span>
-                {activePartner.phone && (
-                  <a
-                    href={`tel:${activePartner.phone}`}
-                    className="inline-flex items-center gap-1 text-[var(--color-marriott-red)]"
-                  >
-                    <Phone size={12} />
-                    {activePartner.phone}
-                  </a>
-                )}
-              </div>
-              {activePartner.note && (
-                <p className="mt-2 text-[12px] text-[var(--color-bonvoy-muted)]">
-                  {activePartner.note}
-                </p>
-              )}
-            </div>
+            <PartnerCardPopup
+              partner={activePartner}
+              hasPetStay={hasPetStay}
+              onClose={() => setActive(null)}
+              onBook={() => setBookingPartner(activePartner)}
+            />
           )}
         </div>
 
@@ -220,7 +247,7 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
             </div>
           ) : visible.length === 0 ? (
             <div className="p-5 text-[13px] text-[var(--color-bonvoy-muted)]">
-              No partners match this filter within 5 miles.
+              No partners match this filter within {radiusMiles} miles.
             </div>
           ) : (
             <ul>
@@ -229,10 +256,7 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
                   <button
                     onClick={() => {
                       setActive(p.id);
-                      mapRef.current?.flyTo({
-                        center: [p.lng, p.lat],
-                        zoom: 14.5,
-                      });
+                      mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14.5 });
                     }}
                     className={cn(
                       "w-full text-left px-4 py-3 hover:bg-[var(--color-bonvoy-mist)] transition-colors",
@@ -252,6 +276,9 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
                         <span className="block text-[11px] text-[var(--color-bonvoy-muted)]">
                           {CATEGORY_LABEL[p.category] ?? p.category} · {p.distance_miles.toFixed(1)} mi
                         </span>
+                        {p.service_model === "mobile" && (
+                          <MobileServiceBadge className="mt-1" />
+                        )}
                       </span>
                       {p.pet_relevant && (
                         <PawPrint size={12} className="text-[var(--color-bonvoy-muted)]" />
@@ -268,15 +295,103 @@ export function PartnerMap({ hotel }: PartnerMapProps): React.ReactElement {
       {!TOKEN && (
         <p className="px-5 py-3 text-[12px] text-[var(--color-bonvoy-muted)] border-t border-[var(--color-bonvoy-rule)] bg-[var(--color-bonvoy-mist)]">
           Set <code className="font-mono">NEXT_PUBLIC_MAPBOX_TOKEN</code> in
-          <code className="font-mono"> frontend/.env.local</code> to enable the
-          interactive map.
+          <code className="font-mono"> frontend/.env.local</code> to enable the interactive map.
         </p>
+      )}
+
+      {bookingPartner && reservationId && hasPetStay && (
+        <PetServiceBookingSheet
+          partner={bookingPartner}
+          defaultDate={defaultServiceDate ?? new Date().toISOString().slice(0, 10)}
+          minDate={stayCheckIn}
+          maxDate={stayCheckOut}
+          onClose={() => setBookingPartner(null)}
+          onConfirm={handleBookConfirm}
+        />
       )}
     </div>
   );
 }
 
+function PartnerCardPopup({
+  partner,
+  hasPetStay,
+  onClose,
+  onBook,
+}: {
+  partner: PartnerResponse;
+  hasPetStay: boolean;
+  onClose: () => void;
+  onBook: () => void;
+}): React.ReactElement {
+  const canBook = hasPetStay && partner.bookable;
+
+  return (
+    <div className="absolute left-4 bottom-4 right-4 md:right-auto md:max-w-sm bg-white rounded-lg shadow-xl border border-[var(--color-bonvoy-rule)] p-4 text-[13px]">
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--color-bonvoy-muted)]">
+            {CATEGORY_LABEL[partner.category] ?? partner.category}
+          </p>
+          <h4 className="font-medium text-[var(--color-bonvoy-ink)] text-[15px]">
+            {partner.name}
+          </h4>
+          {partner.service_model === "mobile" && (
+            <MobileServiceBadge className="mt-1" />
+          )}
+        </div>
+        <button
+          onClick={onClose}
+          className="text-[var(--color-bonvoy-muted)] hover:text-[var(--color-bonvoy-ink)]"
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+      <p className="text-[12px] text-[var(--color-bonvoy-muted)] mb-2">{partner.address}</p>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
+        <span className="inline-flex items-center gap-1">
+          <Star size={12} />
+          {partner.rating.toFixed(1)}
+        </span>
+        <span>{partner.distance_miles.toFixed(1)} mi from hotel</span>
+        {partner.phone && (
+          <a
+            href={`tel:${partner.phone}`}
+            className="inline-flex items-center gap-1 text-[var(--color-marriott-red)]"
+          >
+            <Phone size={12} />
+            {partner.phone}
+          </a>
+        )}
+      </div>
+      {partner.mobile_service_note && (
+        <p className="mt-2 text-[12px] text-[var(--color-bonvoy-muted)]">
+          {partner.mobile_service_note}
+        </p>
+      )}
+      {partner.note && (
+        <p className="mt-2 text-[12px] text-[var(--color-bonvoy-muted)]">{partner.note}</p>
+      )}
+      {canBook ? (
+        <button
+          type="button"
+          onClick={onBook}
+          className="mt-3 w-full rounded-full bg-[var(--color-marriott-red)] text-white py-2 text-[13px] font-medium hover:bg-[var(--color-marriott-red-dark)]"
+        >
+          Book service
+        </button>
+      ) : partner.bookable && !hasPetStay ? (
+        <p className="mt-3 text-[12px] text-[var(--color-bonvoy-muted)] italic">
+          Add a pet to this stay to book services.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function visibleList(list: PartnerResponse[], filter: Filter): PartnerResponse[] {
+  if (filter === "bookable") return list.filter((p) => p.bookable);
   if (filter === "all") return list;
   const allowed = new Set(FILTER_CATEGORIES[filter]);
   return list.filter((p) => allowed.has(p.category));

@@ -4,7 +4,7 @@ import { Calendar, ChevronLeft, MapPin, PawPrint, Star } from "lucide-react";
 import { hotels as hotelsApi } from "@/lib/api";
 import { formatUsd } from "@/lib/utils";
 import { EcoScoreDetail } from "@/components/eco/EcoScoreDetail";
-import { PartnerMap } from "@/components/partners/PartnerMap";
+import { PartnerMapSection } from "@/components/partners/PartnerMapSection";
 
 export const dynamic = "force-dynamic";
 
@@ -117,7 +117,7 @@ export default async function HotelDetailPage({
           )}
 
           {/* Partner map — hero feature */}
-          <PartnerMap hotel={hotel} />
+          <PartnerMapSection hotel={hotel} />
 
           {/* Community events */}
           {hotel.community_events.length > 0 && (

@@ -112,5 +112,25 @@
     "pet_relevant": false,
     "distance_km": 0.0,
     "note": "Hotel-organized e-scooter tour of the National Mall and monuments. 90 minutes. Westin guests get priority booking."
+  },
+  {
+    "id": "partner-dc-008",
+    "hotel_id": "westin-dc-city-center",
+    "name": "Capital City Mobile Grooming",
+    "category": "mobile_grooming",
+    "service_model": "mobile",
+    "bookable": true,
+    "lat": 38.9037,
+    "lng": -77.0237,
+    "address": "Mobile — Westin loading zone",
+    "phone": "+1-202-555-0265",
+    "hours": "9 AM–5 PM",
+    "rating": 4.7,
+    "is_marriott_partner": true,
+    "pet_relevant": true,
+    "distance_km": 0.1,
+    "service_area_miles": 20,
+    "mobile_service_note": "Grooming van parks curbside; concierge coordinates access.",
+    "note": "Book in-app. Full groom from $70."
   }
 ]

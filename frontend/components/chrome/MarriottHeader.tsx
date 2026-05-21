@@ -152,6 +152,14 @@ export function MarriottHeader(): React.ReactElement {
 
             {guest ? (
               <Link
+                href="/profile"
+                className="hidden sm:inline-flex items-center gap-1.5 hover:text-white/80"
+              >
+                Profile
+              </Link>
+            ) : null}
+            {guest ? (
+              <Link
                 href="/trips"
                 className="inline-flex items-center gap-2 rounded-full bg-[var(--color-marriott-red)] text-white px-3.5 py-1.5 text-[13px] font-medium hover:bg-[var(--color-marriott-red-dark)] transition-colors"
               >

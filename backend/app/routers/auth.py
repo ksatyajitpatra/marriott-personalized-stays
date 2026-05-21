@@ -10,24 +10,22 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from app.data.loader import get_seed
 from app.dependencies import get_session_guest_id, require_guest
 from app.models.auth import (
     GuestSummary,
     LoginRequest,
     SessionResponse,
+    UpdatePreferencesRequest,
     build_guest_summary,
 )
+from app.services import guest_preference_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _find_guest(guest_id: str) -> dict[str, Any] | None:
-    """Look up a persona seed dict by id."""
-    for guest in get_seed("guests"):
-        if guest.get("id") == guest_id:
-            return guest
-    return None
+    """Look up a persona seed dict by id (includes preference overrides)."""
+    return guest_preference_service.get_guest_record(guest_id)
 
 
 @router.post("/login", response_model=SessionResponse)
@@ -72,3 +70,19 @@ async def profile(guest: GuestSummary = Depends(require_guest)) -> dict[str, Any
             status_code=status.HTTP_404_NOT_FOUND, detail="Guest not found"
         )
     return full
+
+
+@router.patch("/profile/preferences")
+async def update_preferences(
+    body: UpdatePreferencesRequest,
+    guest: GuestSummary = Depends(require_guest),
+) -> dict[str, Any]:
+    """Update mutable guest preferences (e.g. pet service search radius)."""
+    try:
+        return guest_preference_service.update_preferences(
+            guest.id, body.model_dump(exclude_unset=True)
+        )
+    except KeyError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Guest not found"
+        ) from None
