@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Marriott Bonvoy Enhanced Experience — Frontend
 
-## Getting Started
+A Next.js 16 (App Router) frontend that mimics marriott.com&rsquo;s look while
+showcasing three additive features: **Eco Rating**, **Arrival Brief**, and
+**Pet + Local Partner Map**. See the root `APP_PRD.MD` for the product spec.
 
-First, run the development server:
+## Quick start
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Make sure the backend is running (`cd ../backend && uvicorn app.main:app --reload`).
+2. Copy environment template and add a Mapbox token:
+   ```bash
+   cp .env.example .env.local
+   # then edit .env.local and paste your pk.* Mapbox token
+   ```
+3. Install + run:
+   ```bash
+   npm install
+   npm run dev
+   ```
+4. Open <http://localhost:3000>.
+
+## Routes
+
+| Path | What it shows | Backend used |
+|---|---|---|
+| `/` | Marriott-style hero, search card, featured eco stays | `GET /hotels` |
+| `/sign-in` | Persona switcher (Alex / Jordan / Sam) | `GET /guests`, `POST /auth/login` |
+| `/search` | Filterable hotel results (city, pet, eco rating) | `GET /hotels?city=&pet_friendly=&min_eco=` |
+| `/hotels/[id]` | Detail page with EcoScore breakdown + Mapbox partner map | `GET /hotels/{id}`, `GET /hotels/{id}/eco-score`, `GET /partners/nearby` |
+| `/trips` | "My Trips" list (auth required) | `GET /reservations` |
+| `/trips/[id]` | Arrival Brief view | `GET /reservations/{id}`, `GET /arrival-brief/{id}` |
+
+## Stack
+
+- **Next.js 16** App Router + **React 19** + **TypeScript**
+- **Tailwind CSS v4** (inline `@theme` tokens — no `tailwind.config.ts`)
+- **Zustand** for the auth/persona store
+- **Mapbox GL JS** for the partner map
+- **lucide-react** icons
+
+## Project layout
+
+```
+frontend/
+├── app/
+│   ├── layout.tsx            # global chrome (header + footer)
+│   ├── page.tsx              # /  homepage
+│   ├── sign-in/page.tsx      # /sign-in
+│   ├── search/page.tsx       # /search
+│   ├── hotels/[id]/page.tsx  # /hotels/[id]   (server-rendered)
+│   ├── trips/page.tsx        # /trips         (client, auth-gated)
+│   └── trips/[id]/page.tsx   # /trips/[id]    (client, auth-gated)
+├── components/
+│   ├── chrome/               # MarriottHeader, MarriottFooter
+│   ├── home/                 # HeroSearch
+│   ├── hotels/               # HotelCard
+│   ├── eco/                  # EcoScoreRing, EcoScoreDetail
+│   ├── partners/             # PartnerMap
+│   └── auth/                 # AuthBootstrapper (hydrates session on load)
+└── lib/
+    ├── api.ts                # typed FastAPI client (cookies forwarded server-side)
+    ├── types.ts              # mirrors backend Pydantic models
+    ├── auth-store.ts         # Zustand store
+    └── utils.ts              # cn(), formatUsd, formatDate, ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Design notes
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- The brand red is `#A6192E` (Marriott Primary). All buttons, accents, and
+  active nav rules use it.
+- The chrome (header + footer) mirrors marriott.com&rsquo;s structure: thin black
+  utility bar, white nav bar, dark multi-column footer.
+- `/sign-in`, `/trips`, and `/trips/[id]` are client-rendered because they
+  require the session cookie (set on the FastAPI domain). `/`, `/search`, and
+  `/hotels/[id]` are server-rendered and forward incoming cookies for SSR.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Personas
 
-## Learn More
+Three demo guests are loaded from `data/seeds/guests.json`:
 
-To learn more about Next.js, take a look at the following resources:
+| Persona | Tier | Theme |
+|---|---|---|
+| Alex Rivera | Gold | Vegetarian, sustainability-minded |
+| Jordan Kim | Platinum | Halal, traveling with Mochi (Shiba Inu) |
+| Sam Patel | Silver | Vegan, accessibility needs |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The Arrival Brief, dining picks, and partner-map filters all change based on
+which persona is signed in.

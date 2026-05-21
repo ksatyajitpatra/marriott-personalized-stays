@@ -1,26 +1,52 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ---------------------------------------------------------------
+ * Marriott-inspired theme tokens (Tailwind v4 inline @theme).
+ * Palette references: Marriott Red #A6192E, white, deep charcoal.
+ * Typography: Geist Sans is loaded in app/layout.tsx and exposed via
+ * --font-geist-sans (close to Marriott Sans). Geist Mono is unused
+ * by design (Marriott.com is sans-only).
+ * --------------------------------------------------------------- */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #ffffff;
+  --color-foreground: #1a1a1a;
+
+  /* Marriott brand */
+  --color-marriott-red: #a6192e;
+  --color-marriott-red-dark: #80131f;
+  --color-marriott-red-light: #c63548;
+
+  /* Bonvoy account chip / surfaces */
+  --color-bonvoy-ink: #0f0f0f;
+  --color-bonvoy-mist: #f5f3f0;
+  --color-bonvoy-rule: #e6e2dc;
+  --color-bonvoy-muted: #6b6660;
+
+  /* Eco rating ring colors (PRD 5.1) */
+  --color-eco-green: #1f8a4c;
+  --color-eco-yellow: #d99e2b;
+  --color-eco-red: #c2452f;
+
+  --font-sans:
+    var(--font-geist-sans), "Helvetica Neue", Arial, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* Marriott uses tight, deliberate letterspacing in display headings. */
+.heading-display {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+/* Mapbox base styles — imported when the map mounts. */
+@import "mapbox-gl/dist/mapbox-gl.css";
