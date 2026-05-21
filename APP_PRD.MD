@@ -197,7 +197,11 @@ Keep each section under 60 words.
 **Status:** Build fully
 
 **What it is:**
-A combined feature: (a) guests can add a pet profile when booking, (b) a local partner map at each property shows nearby vetted services. This replaces a static "pet friendly: yes" flag with a rich, transactable experience.
+A combined feature: (a) guests can add a pet profile when booking, (b) a local partner map
+at each property shows nearby vetted services, and (c) guests on **pet-inclusive stays**
+can **book pet services** — including **mobile providers** (grooming vans, in-room sitters)
+— within a **guest-configurable radius** from the hotel (default **10 miles**). This
+replaces a static "pet friendly: yes" flag with a rich, transactable experience.
 
 **Why it matters:**
 - Pet travel is a $10B+ market; 70% of pet owners say pet-friendliness influences hotel choice
@@ -210,6 +214,57 @@ A combined feature: (a) guests can add a pet profile when booking, (b) a local p
 - Stored in `guest.pets[]` in profile
 - At booking: "This property is pet-friendly. Add your pet?"
 - Pet fee shown transparently at booking time (not at check-in surprise)
+- Reservation must include a pet (`has_pet: true` + optional `pet_id`) before any
+  in-app pet service can be booked against that stay
+
+**Pet Service Booking (in-stay & pre-arrival add-on):**
+
+Guests with a **pet-inclusive reservation** can book vetted pet services anchored
+to the **hotel location** — not the guest's home address. Discovery and booking
+share one configurable radius:
+
+| Setting | Default | Range | Storage |
+|---|---|---|---|
+| Pet service search radius | **10 miles** | 1–50 miles | `guest.preferences.pet_service_radius_miles` |
+
+- Radius is **guest-configurable** in Profile → Pet Preferences (slider + numeric input)
+- Map and list views pass the guest's radius to `GET /partners/nearby?max_miles=…`
+- Partners outside the radius are hidden from the **bookable pet services** list;
+  the broader neighborhood map may still show non-bookable pins (restaurants, EV, etc.)
+- **Eligibility gate:** `POST /reservations/{id}/pet-services` is allowed only when:
+  1. Reservation belongs to the signed-in guest
+  2. `reservation.has_pet === true`
+  3. Hotel is pet-friendly
+  4. Partner is `pet_relevant`, `bookable: true`, and within the guest's radius
+- If the guest has no pet on the reservation, partner pins remain visible for
+  discovery but **"Book" is hidden** — show copy: "Add a pet to this stay to book services"
+- Booked services appear on the stay detail under `pet_service_bookings[]`
+  (service date, provider, status)
+
+**Service provider types:**
+
+| Type | `service_model` | UX |
+|---|---|---|
+| Fixed location | `fixed_location` | Pin at shop/clinic address; distance from hotel |
+| Mobile / on-demand | `mobile` | Pin anchored near hotel; badge "Comes to you" |
+
+Mobile providers include grooming vans, mobile vets, in-room pet sitters, and
+similar on-demand services that travel to the guest at the hotel. Examples:
+- "Paws & Polish Mobile Grooming" — grooming truck, books a hotel parking-zone slot
+- "Stay & Wag In-Room Sitting" — sitter meets guest in lobby / room (per policy)
+
+Mobile partners carry:
+- `service_model: "mobile"`
+- `mobile_service_note` — e.g. "Grooming van meets you at hotel loading zone"
+- Optional `service_area_miles` — max distance the provider will travel (must overlap guest radius)
+
+**Bookable pet service categories** (subset of map categories):
+- 🏥 Vets (regular + 24/7 emergency where flagged)
+- 🦮 Dog walkers & sitters (fixed or mobile)
+- ✂️ Mobile grooming / spa (`mobile_grooming`)
+- 🛒 Pet supply delivery (mobile or store pickup)
+
+Non-bookable categories (discovery only): dog parks, pet-welcome restaurants, etc.
 
 **Local Partner Map:**
 
@@ -226,10 +281,15 @@ Categories shown on interactive Mapbox map:
 - 🎭 Local experiences & tours
 
 **Map UX:**
-- Default view: hotel at center, 2km radius
-- Filter chips at top: toggle categories on/off
-- Tap a pin → partner card: name, distance, hours, rating, "Get Directions" / "Reserve"
-- "Reserve" opens in-app booking or deep-links to partner
+- Default view: hotel at center; **bookable pet services** filtered to guest radius
+  (default **10 miles**, configurable in profile)
+- Radius control on map: compact slider ("Search within X mi") synced to profile preference
+- Filter chips at top: toggle categories on/off; **Pet Services** chip defaults on when
+  `has_pet` reservation is active
+- Tap a pin → partner card: name, distance from hotel, hours, rating, service model badge
+  (`Fixed location` | `Mobile — comes to you`), "Get Directions" / **"Book"**
+- **"Book"** only shown for `bookable: true` pet partners when the active stay includes a pet;
+  opens in-app `PetServiceBookingSheet` (date picker + notes) → `POST /reservations/{id}/pet-services`
 - Partners shown with "Marriott Partner" badge if verified
 
 **Data Sources:**
@@ -243,6 +303,10 @@ Categories shown on interactive Mapbox map:
 - `PartnerCard` — bottom sheet on pin tap
 - `PetProfileForm` — in booking flow and user profile
 - `PetFriendlyBadge` — on hotel search card when pet profile active
+- `PetServiceRadiusControl` — profile + map slider (1–50 mi, default 10)
+- `MobileServiceBadge` — "Comes to you" pill on mobile provider cards
+- `PetServiceBookingSheet` — book flow: date, notes, confirm (pet stay required)
+- `PetServiceBookingList` — booked services on stay / trip detail
 
 ---
 
@@ -256,6 +320,7 @@ Categories shown on interactive Mapbox map:
 - Travel interests (multi-select: culture, food, outdoor, nightlife, sustainability, wellness)
 - Accessibility needs (multi-select: mobility, hearing, vision, sensory)
 - Pet profiles (add/remove pets)
+- Pet service search radius (`pet_service_radius_miles`, default **10**, range 1–50)
 - Consent toggles:
   - Arrival Brief (on/off)
   - Local partner recommendations (on/off)
@@ -324,6 +389,7 @@ App Shell (mobile-first, 390px base)
 ├── /stays                     → My Stays
 │   ├── UpcomingStay           → with ArrivalBriefCard (48h before)
 │   ├── CurrentStay            → quick actions
+│   ├── PetServicesSection     → book/list pet services (pet stays only; radius-filtered)
 │   └── PastStays              → badge earned display
 │
 ├── /arrival-brief/:stay_id    → Full Arrival Brief View
@@ -339,6 +405,7 @@ App Shell (mobile-first, 390px base)
 │   ├── BadgeShelf             → eco badges earned
 │   ├── PreferencesSection     → dietary, interests, accessibility
 │   ├── PetProfiles            → manage pets
+│   ├── PetServiceRadius       → default search radius (mi) for bookable pet services
 │   ├── ConsentToggles         → privacy settings
 │   └── AccessibilitySettings  → display modes
 │
@@ -347,6 +414,7 @@ App Shell (mobile-first, 390px base)
     ├── PetAddStep             → (if pet profile exists)
     ├── EcoPointsPreview       → "You'll earn +900 Green Points"
     └── Confirmation
+        └── PetServicesUpsell      → (optional) browse bookable services after pet add-on
 ```
 
 ---
@@ -392,6 +460,55 @@ App Shell (mobile-first, 390px base)
 }
 ```
 
+### Partner Seed Data Schema (partners_{city}.json)
+
+Extends Section 5.3 — each partner pin:
+
+```json
+{
+  "id": "partner-nyc-006",
+  "hotel_id": "marriott-nyc-times-sq",
+  "name": "Paws & Polish Mobile Grooming",
+  "category": "mobile_grooming",
+  "service_model": "mobile",
+  "bookable": true,
+  "lat": 40.7590,
+  "lng": -73.9845,
+  "address": "Mobile — meets at hotel loading zone",
+  "phone": "+1-917-555-0142",
+  "hours": "8 AM–6 PM",
+  "rating": 4.8,
+  "is_marriott_partner": true,
+  "pet_relevant": true,
+  "distance_km": 0.2,
+  "service_area_miles": 15,
+  "mobile_service_note": "Full-service grooming van; allow 90 min. Hotel concierge notified automatically.",
+  "note": "Book in-app. From $65."
+}
+```
+
+| Field | Required | Notes |
+|---|---|---|
+| `service_model` | For bookable pet services | `fixed_location` (default) or `mobile` |
+| `bookable` | For pet services | `true` = in-app booking via pet-services endpoint |
+| `service_area_miles` | Mobile only | Provider's max travel radius; must cover hotel |
+| `mobile_service_note` | Mobile only | Shown on PartnerCard + booking confirmation |
+
+**Guest preference (guests.json):**
+
+```json
+"preferences": {
+  "pet_service_radius_miles": 10
+}
+```
+
+**API (pet services):**
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/partners/nearby?hotel_id=…&max_miles=10&pet_only=true` | Uses guest radius; filter bookable in UI |
+| POST | `/reservations/{id}/pet-services` | Requires `has_pet: true` on reservation |
+
 ---
 
 ## 9. Build Plan
@@ -411,6 +528,8 @@ App Shell (mobile-first, 390px base)
 - [ ] Build Arrival Brief: profile prefs → LLM/mock → rendered card
 - [ ] Build User Profile page (preferences, consent toggles, badges)
 - [ ] Wire up pet profile to booking flow
+- [ ] Pet service booking UI: radius control, mobile provider badges, book sheet (pet stays only)
+- [ ] Seed mobile grooming + mobile sitter partners in `partners_*.json`
 
 ### Day 3 (Polish + Presentation)
 - [ ] Accessibility mode toggle (CSS only)
@@ -442,6 +561,7 @@ App Shell (mobile-first, 390px base)
 | Arrival Brief | **−2** | Reduces concierge calls for weather/event/transit questions |
 | Local Partner Map | **−1** | Reduces "what's nearby?" front desk questions |
 | Pet Booking | **0** | Pet fee + policy shown at booking; no surprise check-in conversation |
+| Pet Service Booking | **0** | Fully self-serve; mobile providers meet guest at hotel — no front-desk coordination |
 | User Preferences | **0** | Stored digitally; reduces manual preference note-taking |
 
 ---
@@ -454,6 +574,7 @@ App Shell (mobile-first, 390px base)
 | Eco Rating | None (public hotel data) | N/A | Cached on server |
 | Local Partner Map | Hotel location | No consent needed (not personal) | No PII stored |
 | Pet Profile | Pet name, breed, weight | Explicit add in profile | Guest profile |
+| Pet Service Booking | Stay dates, hotel location, pet on reservation, service notes | Implicit when booking add-on (pet stay required) | Per-reservation |
 | Preference Learning | Past stay data | Opt-in toggle (off by default) | Encrypted profile |
 
 Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We inherit this — no new implementation needed.
@@ -467,7 +588,8 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 | Per-property eco score | ❌ | ❌ | ❌ | ✅ Sub-scores + points multiplier |
 | Pre-arrival AI brief | ❌ | ❌ | ❌ | ✅ LLM-generated, diet-aware |
 | Local partner map | ❌ | ❌ | Partial | ✅ Interactive + reservable |
-| Pet marketplace | ❌ | ❌ | ❌ | ✅ Vets, walkers, parks |
+| Pet marketplace | ❌ | ❌ | ❌ | ✅ Vets, walkers, parks + **in-app booking** |
+| Mobile pet services (grooming, etc.) | ❌ | ❌ | ❌ | ✅ Radius-filtered, hotel-anchored, pet-stay gated |
 | Gamified eco badges | ❌ | Partial | ✅ | ✅ Property + brand-specific |
 
 ---
@@ -515,8 +637,12 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 ### Feature: Pet + Local Partner Map
 - [x] Mapbox map component (frontend) — `PartnerMap.tsx` with category filter chips
 - [x] Partner seed data (NYC, DC, Chicago)
-- [x] Backend endpoint `GET /partners/nearby` with pet/category/distance filters
-- [x] Pet service booking endpoint `POST /reservations/{id}/pet-services`
+- [x] Backend endpoint `GET /partners/nearby` with pet/category/distance filters (`max_miles`, default 10)
+- [x] Pet service booking endpoint `POST /reservations/{id}/pet-services` (requires `has_pet` on reservation)
+- [ ] Guest-configurable pet service radius (`pet_service_radius_miles`, default 10 mi) in profile + map UI
+- [ ] Mobile provider support in seed data (`service_model: mobile`, `mobile_grooming` category)
+- [ ] `PetServiceBookingSheet` + booked services list on stay detail (frontend)
+- [ ] `MobileServiceBadge` + hide Book CTA when stay has no pet (frontend)
 - [x] Category filter chips (frontend) — All / Pet / Dining / Experiences
 - [x] PartnerCard bottom sheet (frontend) — popup card on marker click + sidebar list
 - [ ] PetProfileForm in booking + profile (frontend)
