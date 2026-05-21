@@ -486,39 +486,45 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 > This section is auto-updated as features are built. Check off items as they are completed.
 
 ### Core Infrastructure
-- [ ] Next.js 14 project initialized
-- [ ] FastAPI backend initialized
-- [ ] Docker + docker-compose setup
-- [ ] Seed data files created
+- [x] Next.js 14 project initialized
+- [x] FastAPI backend initialized
+- [x] Docker + docker-compose setup (backend Dockerfile)
+- [x] Seed data files created (hotels, guests, stays, partners x3, restaurants, events, arrival briefs)
 - [ ] Mapbox integration working
 
 ### Feature: Eco Rating
-- [ ] EcoScoreRing component
-- [ ] EcoSubScoreBreakdown component
-- [ ] EcoPointsCallout component
-- [ ] EcoBadgeDisplay component
-- [ ] Hotels loaded from seed data with eco scores
-- [ ] Filter by eco score on search results
+- [ ] EcoScoreRing component (frontend)
+- [ ] EcoSubScoreBreakdown component (frontend)
+- [ ] EcoPointsCallout component (frontend)
+- [ ] EcoBadgeDisplay component (frontend)
+- [x] Hotels loaded from seed data with eco scores (backend `GET /hotels`)
+- [x] Filter by eco score on search results (backend `?min_eco=`)
+- [x] PRD eco scoring formula implemented (`compute_eco_score` — 6 weighted sub-scores, 900/300 bonus tiers)
 
 ### Feature: Arrival Brief
-- [ ] Weather API integration (OpenWeatherMap)
-- [ ] LLM prompt + mock fallback
-- [ ] ArrivalBriefCard component
-- [ ] BriefSection components (weather, events, dining, transit)
-- [ ] Consent toggle in profile
-- [ ] Dietary preference filter applied
+- [x] Weather API integration (OpenWeatherMap with deterministic mock fallback)
+- [x] LLM prompt + mock fallback (LiteLLM via TIP.AI proxy; seed fixtures by default)
+- [x] Backend endpoint `GET /arrival-brief/{stay_id}` with personalized seeds for alex/jordan/sam
+- [ ] ArrivalBriefCard component (frontend)
+- [ ] BriefSection components (weather, events, dining, transit) (frontend)
+- [ ] Consent toggle in profile (frontend)
+- [ ] Dietary preference filter applied (frontend wiring; backend already personalizes)
 
 ### Feature: Pet + Local Partner Map
-- [ ] Mapbox map component
-- [ ] Partner seed data (NYC, DC, Chicago)
-- [ ] Category filter chips
-- [ ] PartnerCard bottom sheet
-- [ ] PetProfileForm in booking + profile
-- [ ] Pet filter on hotel search
+- [ ] Mapbox map component (frontend)
+- [x] Partner seed data (NYC, DC, Chicago)
+- [x] Backend endpoint `GET /partners/nearby` with pet/category/distance filters
+- [x] Pet service booking endpoint `POST /reservations/{id}/pet-services`
+- [ ] Category filter chips (frontend)
+- [ ] PartnerCard bottom sheet (frontend)
+- [ ] PetProfileForm in booking + profile (frontend)
+- [x] Pet filter on hotel search (backend `?pet_friendly=true`)
 
 ### Supporting
-- [ ] User Profile page (preferences, consent, badges)
-- [ ] Accessibility mode toggle
-- [ ] Community events section
-- [ ] Booking flow skeleton
-- [ ] 3 demo personas loadable
+- [x] Mock auth: 3 demo personas loadable (`POST /auth/login`, session cookie)
+- [x] Booking flow backend (`POST /reservations`, `/payment`, `/pet-services`)
+- [x] LiteLLM client wired (`app/services/llm_service.py`)
+- [ ] User Profile page (preferences, consent, badges) (frontend)
+- [ ] Accessibility mode toggle (frontend, CSS only)
+- [ ] Community events section (frontend; data already in `community_events` on each hotel)
+- [ ] Booking flow skeleton (frontend)

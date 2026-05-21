@@ -9,7 +9,18 @@ echo "================================"
 
 # Check prerequisites
 command -v node >/dev/null 2>&1 || { echo "❌ Node.js is required. Install from https://nodejs.org"; exit 1; }
-command -v python3 >/dev/null 2>&1 || { echo "❌ Python 3.11+ is required."; exit 1; }
+
+# Pick a Python interpreter that has pre-built pydantic-core wheels.
+# Python 3.14 lacks wheels and tries to compile from source (slow + fails behind some
+# corp SSL setups), so we prefer 3.12 → 3.11 → 3.13 → 3 in that order.
+PYTHON_BIN=""
+for cand in python3.12 python3.11 python3.13 python3; do
+  if command -v "$cand" >/dev/null 2>&1; then PYTHON_BIN="$cand"; break; fi
+done
+if [ -z "$PYTHON_BIN" ]; then
+  echo "❌ Python 3.11+ is required."; exit 1
+fi
+echo "Using $PYTHON_BIN ($($PYTHON_BIN --version))"
 
 echo ""
 echo "1. Setting up frontend..."
@@ -40,8 +51,9 @@ else
 fi
 
 if [ ! -d "venv" ]; then
-  python3 -m venv venv
+  "$PYTHON_BIN" -m venv venv
   source venv/bin/activate
+  pip install --upgrade pip
   pip install -r requirements.txt
   echo "   ✅ Backend virtualenv created and dependencies installed"
 else
