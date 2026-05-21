@@ -28,6 +28,21 @@
     "arrival_brief_generated": false
   },
   {
+    "id": "stay-jordan-past-001",
+    "guest_id": "jordan",
+    "hotel_id": "westin-dc-city-center",
+    "check_in": "2026-03-12",
+    "check_out": "2026-03-15",
+    "nights": 3,
+    "room_type": "Heavenly King Room",
+    "confirmation_number": "20020201",
+    "status": "completed",
+    "has_pet": true,
+    "pet_id": "pet-001",
+    "pet_fee_charged": 50,
+    "points_earned": 4200
+  },
+  {
     "id": "stay-sam-001",
     "guest_id": "sam",
     "hotel_id": "element-miami",
@@ -53,5 +68,59 @@
     "has_pet": false,
     "eco_badge_earned": "green_stay",
     "points_earned": 3900
+  },
+  {
+    "id": "stay-alex-past-002",
+    "guest_id": "alex",
+    "hotel_id": "westin-dc-city-center",
+    "check_in": "2026-02-14",
+    "check_out": "2026-02-17",
+    "nights": 3,
+    "room_type": "Heavenly King Room",
+    "confirmation_number": "55443322",
+    "status": "completed",
+    "has_pet": false,
+    "eco_badge_earned": "green_stay",
+    "points_earned": 3900
+  },
+  {
+    "id": "stay-alex-past-003",
+    "guest_id": "alex",
+    "hotel_id": "marriott-nyc-times-sq",
+    "check_in": "2025-11-08",
+    "check_out": "2025-11-11",
+    "nights": 3,
+    "room_type": "City View King",
+    "confirmation_number": "44332211",
+    "status": "completed",
+    "has_pet": false,
+    "eco_badge_earned": "green_stay",
+    "points_earned": 3900
+  },
+  {
+    "id": "stay-alex-past-004",
+    "guest_id": "alex",
+    "hotel_id": "marriott-chicago-magnificent-mile",
+    "check_in": "2025-09-04",
+    "check_out": "2025-09-07",
+    "nights": 3,
+    "room_type": "Lakeview King",
+    "confirmation_number": "33221100",
+    "status": "completed",
+    "has_pet": false,
+    "points_earned": 3300
+  },
+  {
+    "id": "stay-alex-past-005",
+    "guest_id": "alex",
+    "hotel_id": "ritz-carlton-chicago",
+    "check_in": "2025-06-18",
+    "check_out": "2025-06-20",
+    "nights": 2,
+    "room_type": "Deluxe Lake View",
+    "confirmation_number": "22110099",
+    "status": "completed",
+    "has_pet": false,
+    "points_earned": 3000
   }
 ]

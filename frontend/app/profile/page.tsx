@@ -7,6 +7,7 @@ import { PawPrint } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useProfileStore } from "@/lib/profile-store";
 import { PetServiceRadiusControl } from "@/components/pet/PetServiceRadiusControl";
+import { BadgeShelf } from "@/components/eco/BadgeShelf";
 
 export default function ProfilePage(): React.ReactElement {
   const router = useRouter();
@@ -49,6 +50,8 @@ export default function ProfilePage(): React.ReactElement {
             {guest.tier} · {guest.points.toLocaleString()} points
           </p>
         </div>
+
+        <BadgeShelf />
 
         <section className="bg-white border border-[var(--color-bonvoy-rule)] rounded-lg p-6">
           <div className="flex items-center gap-2 mb-4">
