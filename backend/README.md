@@ -37,6 +37,7 @@ Open http://localhost:8000/docs for the interactive OpenAPI UI.
 | POST   | `/reservations`                       | book a stay                   |
 | POST   | `/reservations/{id}/payment`          | mock payment                  |
 | POST   | `/reservations/{id}/pet-services`     | book a pet service (date + time) |
+| GET    | `/reservations/{id}/pet-services/recommendations` | LiteLLM-ranked pet service picks |
 | DELETE | `/reservations/{id}/pet-services/{bid}` | cancel a pet service booking   |
 | GET    | `/arrival-brief/{stay_id}`            | pre-stay personalized brief   |
 

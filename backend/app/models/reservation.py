@@ -80,6 +80,7 @@ class ReservationResponse(BaseModel):
     confirmation_number: str
     status: str = Field(description="pending_payment | upcoming | in_stay | completed")
     has_pet: bool
+    pet_id: str | None = None
     pet_fee_charged: int | None = None
     total_usd: float
     payment_status: str = Field(description="unpaid | paid")

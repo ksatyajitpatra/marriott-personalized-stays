@@ -140,6 +140,29 @@ export interface PartnerResponse {
   mobile_service_note: string | null;
 }
 
+export interface PetServiceRecommendationItem {
+  partner_id: string;
+  partner_name: string;
+  category: string;
+  service_model: "fixed_location" | "mobile";
+  distance_miles: number;
+  rating: number;
+  bookable: boolean;
+  mobile_service_note: string | null;
+  rationale: string;
+  suggested_time: string | null;
+  priority: number;
+}
+
+export interface PetServiceRecommendationsResponse {
+  reservation_id: string;
+  generated_at: string;
+  generated_by: "mock_llm" | "litellm";
+  radius_miles: number;
+  summary: string;
+  recommendations: PetServiceRecommendationItem[];
+}
+
 export interface PetServiceBooking {
   id: string;
   partner_id: string;
@@ -166,6 +189,7 @@ export interface ReservationResponse {
   confirmation_number: string;
   status: "pending_payment" | "upcoming" | "in_stay" | "completed";
   has_pet: boolean;
+  pet_id: string | null;
   pet_fee_charged: number | null;
   total_usd: number;
   payment_status: "unpaid" | "paid";

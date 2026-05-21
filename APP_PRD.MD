@@ -240,6 +240,10 @@ share one configurable radius:
   discovery but **"Book" is hidden** — show copy: "Add a pet to this stay to book services"
 - Booked services appear on the stay detail under `pet_service_bookings[]`
   (service date, **time**, provider, status)
+- **Pet + Local Partner Map** loads **`GET /reservations/{id}/pet-services/recommendations`**
+  on mount for pet stays — a **realtime LiteLLM call** (TIP.AI proxy) ranks bookable
+  partners from seed data with personalized rationale inside the map section; falls back to mock ranking when
+  `USE_MOCK_LLM=true` or the call fails
 - Guests pick **date + time** when booking; appointment must fall within check-in → check-out
 - Guests may **cancel** a confirmed booking in-app; status becomes `cancelled` (Associate Effort Delta ≤ 0)
 
@@ -260,13 +264,11 @@ Mobile partners carry:
 - `mobile_service_note` — e.g. "Grooming van meets you at hotel loading zone"
 - Optional `service_area_miles` — max distance the provider will travel (must overlap guest radius)
 
-**Bookable pet service categories** (subset of map categories):
-- 🏥 Vets (regular + 24/7 emergency where flagged)
+**Bookable pet service categories** (in-app booking only):
 - 🦮 Dog walkers & sitters (fixed or mobile)
 - ✂️ Mobile grooming / spa (`mobile_grooming`)
-- 🛒 Pet supply delivery (mobile or store pickup)
 
-Non-bookable categories (discovery only): dog parks, pet-welcome restaurants, etc.
+Non-bookable categories (discovery only): vets (including 24/7 emergency), pet supply, dog parks, pet-welcome restaurants, etc.
 
 **Local Partner Map:**
 
@@ -301,7 +303,7 @@ Categories shown on interactive Mapbox map:
 - Pet policy per property: mock in `/data/seeds/hotels.json`, production source = Opera PMS
 
 **UI Components:**
-- `LocalPartnerMap` — full Mapbox interactive map
+- `LocalPartnerMap` — full Mapbox interactive map; embeds LiteLLM-ranked bookable pet picks (realtime fetch) for pet stays
 - `PartnerCategoryFilter` — horizontal scrolling chip filters
 - `PartnerCard` — bottom sheet on pin tap
 - `PetProfileForm` — in booking flow and user profile
@@ -310,6 +312,8 @@ Categories shown on interactive Mapbox map:
 - `MobileServiceBadge` — "Comes to you" pill on mobile provider cards
 - `PetServiceBookingSheet` — book flow: date, **time**, notes, confirm (pet stay required)
 - `PetServiceBookingList` — booked services on stay / trip detail with **cancel** action
+
+**Bookable vs discovery-only:** In-app booking is limited to `dog_walker` and `mobile_grooming`. Vets, pet supply, and dog parks appear on the map for discovery only.
 
 ---
 
@@ -511,6 +515,7 @@ Extends Section 5.3 — each partner pin:
 |---|---|---|
 | GET | `/partners/nearby?hotel_id=…&max_miles=10&pet_only=true` | Uses guest radius; filter bookable in UI |
 | POST | `/reservations/{id}/pet-services` | Body: `partner_id`, `service_date`, `service_time` (HH:MM), `notes`; requires `has_pet` |
+| GET | `/reservations/{id}/pet-services/recommendations` | Realtime LiteLLM-ranked bookable services (mock fallback when `USE_MOCK_LLM=true`) |
 | DELETE | `/reservations/{id}/pet-services/{booking_id}` | Cancels a confirmed booking (status → `cancelled`) |
 
 ---
@@ -648,6 +653,7 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] `PetServiceBookingSheet` + booked services list on stay detail (frontend)
 - [x] Date + time selection on pet service booking (frontend + backend)
 - [x] Cancel pet service booking (`DELETE /reservations/{id}/pet-services/{booking_id}`)
+- [x] Realtime LiteLLM pet service recommendations on reservation detail (`GET .../pet-services/recommendations`)
 - [x] `MobileServiceBadge` + hide Book CTA when stay has no pet (frontend)
 - [x] Category filter chips (frontend) — All / Pet / Dining / Experiences
 - [x] PartnerCard bottom sheet (frontend) — popup card on marker click + sidebar list

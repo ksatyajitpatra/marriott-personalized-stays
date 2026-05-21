@@ -13,7 +13,9 @@ the LiteLLM proxy.
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -98,3 +100,12 @@ async def litellm_chat(
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as exc:
         raise LLMUnavailableError(f"Unexpected LLM response shape: {data}") from exc
+
+
+def parse_llm_json(raw: str) -> Any:
+    """Parse JSON from an LLM reply, stripping optional markdown fences."""
+    text = raw.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, count=1)
+        text = re.sub(r"\s*```$", "", text, count=1)
+    return json.loads(text.strip())
