@@ -253,6 +253,8 @@ export interface BriefEvent {
   date: string;
   type: string;
   why_youll_love_it: string;
+  affiliate?: AffiliateOffer | null;
+  source_url?: string | null;
 }
 
 export interface BriefDining {
@@ -260,6 +262,8 @@ export interface BriefDining {
   cuisine: string;
   dietary_match: string;
   note: string;
+  affiliate?: AffiliateOffer | null;
+  source_url?: string | null;
 }
 
 export interface WeatherDay {
@@ -288,4 +292,61 @@ export interface ArrivalBriefResponse {
   transit: string;
   property_note: string;
   eco_note: string | null;
+  live_search_used?: boolean;
+  tool_calls?: ToolCallSummary[];
+}
+
+/* ----------------------- Live Concierge Agent ----------------------- */
+
+export interface AffiliateOffer {
+  partner: string;
+  partner_domain: string;
+  deeplink: string;
+  est_commission_usd: number;
+  bonvoy_bonus_points: number;
+  disclosure: string;
+}
+
+export type ToolStatus = "started" | "ok" | "error" | "fallback";
+
+export interface ToolCallSummary {
+  name: string;
+  status: ToolStatus;
+  source: "live" | "mock";
+  duration_ms: number;
+  result_count: number;
+  summary: string;
+}
+
+export type AgentEventType =
+  | "agent_started"
+  | "tool_call_started"
+  | "tool_call_finished"
+  | "agent_thinking"
+  | "final_brief"
+  | "agent_finished"
+  | "agent_error";
+
+export interface AgentEvent<T = Record<string, unknown>> {
+  type: AgentEventType;
+  timestamp: string;
+  payload: T;
+}
+
+export interface AffiliateClickRecord {
+  stay_id: string;
+  partner: string;
+  partner_domain: string;
+  url: string;
+  est_commission_usd: number;
+  bonvoy_bonus_points: number;
+  clicked_at: string;
+}
+
+export interface AffiliateLedgerResponse {
+  stay_id: string;
+  click_count: number;
+  projected_commission_usd: number;
+  projected_bonus_points: number;
+  clicks: AffiliateClickRecord[];
 }

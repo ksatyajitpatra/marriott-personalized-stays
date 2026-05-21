@@ -83,7 +83,10 @@ async def _live_forecast(
         return None
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        # ``verify=False`` — some macOS Python builds reject the OWM cert
+        # chain because of a self-signed corporate root in the keychain.
+        # Same pattern is used by the LiteLLM client.
+        async with httpx.AsyncClient(timeout=15.0, verify=False) as client:
             geo_resp = await client.get(
                 _OWM_GEO_URL,
                 params={"q": city, "limit": 1, "appid": settings.openweather_api_key},

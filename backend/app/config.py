@@ -31,6 +31,19 @@ class Settings(BaseSettings):
     # --- Weather (OpenWeatherMap) -------------------------------------------
     openweather_api_key: str = ""
 
+    # --- Tavily (live web search for the concierge agent) -------------------
+    # When TAVILY_API_KEY is empty, the concierge agent transparently falls
+    # back to seed-derived mock results so the demo always works offline.
+    tavily_api_key: str = ""
+    tavily_max_results: int = 5
+    tavily_timeout_seconds: float = 8.0
+    # Default value of `preferences.live_search_enabled` for guests that have
+    # not toggled the flag explicitly. The demo runs the live concierge agent
+    # by default so judges immediately see Tavily-grounded recommendations;
+    # the agent transparently falls back to seed-derived mocks when
+    # TAVILY_API_KEY is missing or the API call fails.
+    live_search_enabled_default: bool = True
+
     # --- CORS ---------------------------------------------------------------
     # Stored as the raw env var (comma-separated) and exposed as a list via
     # the computed property below.

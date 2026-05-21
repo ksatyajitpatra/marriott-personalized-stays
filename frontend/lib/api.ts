@@ -4,6 +4,8 @@
  */
 
 import type {
+  AffiliateClickRecord,
+  AffiliateLedgerResponse,
   ArrivalBriefResponse,
   BadgeShelfResponse,
   EcoScoreResponse,
@@ -234,6 +236,30 @@ export const reservations = {
 export const arrivalBrief = {
   get: (stayId: string) =>
     request<ArrivalBriefResponse>(`/arrival-brief/${stayId}`),
+  /** SSE stream URL for the live concierge agent — consume via EventSource. */
+  streamUrl: (stayId: string, opts?: { liveSearch?: boolean }) =>
+    buildUrl(`/arrival-brief/${stayId}/stream`, {
+      live_search: opts?.liveSearch ? "true" : "false",
+    }),
+};
+
+/* --------------------------- Affiliate -------------------------- */
+
+export const affiliate = {
+  click: (payload: {
+    stay_id: string;
+    partner: string;
+    partner_domain: string;
+    url: string;
+    est_commission_usd: number;
+    bonvoy_bonus_points: number;
+  }) =>
+    request<AffiliateClickRecord>("/affiliate/click", {
+      method: "POST",
+      body: payload,
+    }),
+  ledger: (stayId: string) =>
+    request<AffiliateLedgerResponse>(`/affiliate/ledger/${stayId}`),
 };
 
 export const api = {
@@ -243,4 +269,5 @@ export const api = {
   partners,
   reservations,
   arrivalBrief,
+  affiliate,
 };

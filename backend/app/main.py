@@ -20,7 +20,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.data.loader import load_seeds
 from app.routers import (
+    affiliate,
     arrival_brief,
+    arrival_brief_stream,
     auth,
     guests,
     health,
@@ -87,3 +89,5 @@ app.include_router(hotels.router)
 app.include_router(partners.router)
 app.include_router(reservations.router)
 app.include_router(arrival_brief.router)
+app.include_router(arrival_brief_stream.router)
+app.include_router(affiliate.router)

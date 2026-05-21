@@ -205,6 +205,57 @@ Responses may arrive markdown-wrapped; backend strips fences via `parse_llm_json
 
 ---
 
+### 5.2.1 🤖 Live Concierge Agent (Arrival Brief upgrade)
+
+**Status:** Built (May 2026 upgrade)
+
+**What it is:** the Arrival Brief is no longer a single LLM completion. When the guest clicks **"Build my brief"**, a streaming agent runs in the backend, calls a set of tools in parallel (`get_weather`, `search_events`, `search_dining`, `search_pet_services`, `search_activities`, `get_partner_catalog`), and streams its full tool-call trace to the UI as Server-Sent Events. The composed brief comes back grounded in real Tavily web results, and every event/dining/pet pick gets a tracked **"Book via Marriott"** affiliate chip that earns the guest bonus Bonvoy points.
+
+**Why it matters (judging beat):**
+- Demonstrates real agentic behavior — parallel tool-calling with a visible trace, not a single black-box LLM call
+- Web-grounds every recommendation against fresh Tavily results (no stale seed data)
+- Makes the Marriott revenue model legible: each click decorates a real partner deeplink with `utm_source=marriott_bonvoy`, and a bottom-of-brief ledger panel shows projected commission + bonus points
+- Always demo-safe: mock fallback per tool, hard 12s timeout, `live | mock` badges in the trace
+
+**Tools registered with the agent:**
+
+| Tool | Live source | Mock fallback |
+|---|---|---|
+| `get_weather` | OpenWeatherMap (already wired) | Deterministic seed-derived 3-day forecast |
+| `search_events` | Tavily Search API | Hotel `community_events` seed |
+| `search_dining` | Tavily Search API | `restaurants.json` filtered by dietary tags |
+| `search_pet_services` | Tavily Search API | `partners_*.json` pet-relevant entries |
+| `search_activities` | Tavily Search API | Generated Viator-style mock |
+| `get_partner_catalog` | n/a (internal) | Marriott-partner entries from `partners_*.json` |
+
+**Privacy boundary (extends § 12):** Tavily only ever receives `{city, dates, dietary tags, interest tags, query}`. No name, email, loyalty number, pet name, or stay confirmation number is ever sent off-platform. The new sub-toggle `preferences.live_search_enabled` defaults to **off**; when it's off (or `TAVILY_API_KEY` is empty), every search tool transparently returns seed-derived data and the trace pane shows `mock` badges.
+
+**Commission / Bonvoy bonus model:**
+
+Each tool result is wrapped with an `AffiliateOffer`:
+```
+{ partner: "OpenTable", deeplink: "<url>?utm_source=marriott_bonvoy&...",
+  est_commission_usd: 6.40, bonvoy_bonus_points: 320 }
+```
+- Rates come from a static table (`backend/app/services/affiliate_service.py`) sourced from each partner's published affiliate program: OpenTable 8%, Viator 8%, Rover 15%, Ticketmaster 5%, etc.
+- 50% of every commission flows back to the guest as Bonvoy bonus points (50pt per $1) — surfaced on the chip and in the ledger panel.
+- Click-throughs are recorded in an in-memory ledger (`/affiliate/click`, `/affiliate/ledger/{stay_id}`) — sufficient for the demo; in production this would land in the existing Bonvoy CDP.
+
+**Endpoints added:**
+- `GET /arrival-brief/{stay_id}/stream?live_search=true` — SSE stream of `AgentEvent` envelopes
+- `POST /affiliate/click` — record a tracked click
+- `GET /affiliate/ledger/{stay_id}` — running totals for the panel
+
+**Frontend additions:**
+- `components/brief/AgentTracePane.tsx` — collapsible live trace pane
+- `components/brief/AffiliateChip.tsx` — "Book via Marriott +N pts" CTA
+- `components/brief/AffiliateLedgerPanel.tsx` — bottom-of-brief commission summary
+- `lib/agent-stream.ts` — typed SSE client hook
+
+**Associate Effort Delta:** still **0**. The agent runs entirely server-side; no associate is involved at any step.
+
+---
+
 ### 5.3 🐾 Pet + Local Partner Graph — MVP Feature #3
 
 **Status:** Build fully
@@ -711,6 +762,21 @@ Marriott already has a "delete all data" flow (per Bonvoy Privacy Policy). We in
 - [x] Profile-driven brief refresh on trip detail when dietary/interests change
 - [ ] Consent toggle in profile (frontend)
 - [x] Dietary preference filter applied (frontend renders `dietary_match` from backend)
+
+### Feature: Live Concierge Agent (Arrival Brief 5.2.1)
+- [x] Tavily search service (`backend/app/services/tavily_service.py`) with seed fallback
+- [x] Concierge tool-calling agent (`backend/app/services/concierge_agent.py`) — 6 tools, parallel `asyncio.gather`, deterministic mock plan, hard 12s timeout
+- [x] LiteLLM tool-calling helper (`litellm_chat_with_tools` in `llm_service.py`)
+- [x] Affiliate / commission service + in-memory click ledger (`affiliate_service.py`)
+- [x] SSE streaming endpoint `GET /arrival-brief/{stay_id}/stream`
+- [x] Affiliate endpoints `POST /affiliate/click` + `GET /affiliate/ledger/{stay_id}`
+- [x] Pydantic models for `AgentEvent`, `ToolCall*`, `AffiliateOffer`, `AffiliateLedgerResponse`
+- [x] `AgentTracePane.tsx` — live trace pane with status pill + per-row live/mock badge + timing
+- [x] `AffiliateChip.tsx` — "Book via Marriott +N pts" deeplink CTA with click tracking
+- [x] `AffiliateLedgerPanel.tsx` — bottom-of-brief commission summary
+- [x] `lib/agent-stream.ts` typed SSE client hook
+- [x] Trip page wired to live concierge (toggle, trace, chips, ledger)
+- [x] Privacy boundary documented (`live_search_enabled` toggle, no PII to Tavily)
 
 ### Feature: Pet + Local Partner Map
 - [x] Mapbox map component (frontend) — `PartnerMap.tsx` with category filter chips

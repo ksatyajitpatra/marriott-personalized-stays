@@ -109,3 +109,63 @@ def parse_llm_json(raw: str) -> Any:
         text = re.sub(r"^```(?:json)?\s*", "", text, count=1)
         text = re.sub(r"\s*```$", "", text, count=1)
     return json.loads(text.strip())
+
+
+async def litellm_chat_with_tools(
+    messages: list[dict[str, Any]],
+    *,
+    tools: list[dict[str, Any]],
+    max_tokens: int = 1200,
+    tool_choice: str | dict[str, Any] = "auto",
+) -> dict[str, Any]:
+    """Call the LiteLLM proxy with OpenAI-style tool definitions.
+
+    Args:
+        messages: OpenAI-style chat messages (may include role=tool entries).
+        tools: List of OpenAI tool schemas (``{"type": "function", "function": {...}}``).
+        max_tokens: Max tokens to generate.
+        tool_choice: ``"auto"``, ``"none"``, or a forced tool selector.
+
+    Returns:
+        The full assistant ``message`` dict, e.g.
+        ``{"role": "assistant", "content": "...", "tool_calls": [...]}``.
+
+    Raises:
+        LLMConfigError: When ``USE_MOCK_LLM`` is true or required env is missing.
+        LLMUnavailableError: When the upstream call fails or returns a bad shape.
+    """
+    if settings.use_mock_llm:
+        raise LLMConfigError("Live LLM disabled (USE_MOCK_LLM=true)")
+
+    _validate_live_config()
+
+    payload: dict[str, Any] = {
+        "model": settings.litellm_model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "tools": tools,
+        "tool_choice": tool_choice,
+    }
+    temp = settings.litellm_temperature_value
+    if temp is not None:
+        payload["temperature"] = temp
+
+    headers = {
+        "Authorization": f"Bearer {settings.litellm_api_key}",
+        "Content-Type": "application/json",
+    }
+    url = f"{settings.litellm_base_url.rstrip('/')}/v1/chat/completions"
+
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=60.0) as client:
+            resp = await client.post(url, headers=headers, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPError as exc:
+        logger.exception("LiteLLM tool-calling request failed")
+        raise LLMUnavailableError(str(exc)) from exc
+
+    try:
+        return data["choices"][0]["message"]
+    except (KeyError, IndexError) as exc:
+        raise LLMUnavailableError(f"Unexpected LLM response shape: {data}") from exc

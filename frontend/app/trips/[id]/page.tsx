@@ -35,6 +35,9 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useProfileStore } from "@/lib/profile-store";
 import { PetServiceBookingList } from "@/components/pet/PetServiceBookingList";
 import { PartnerMap } from "@/components/partners/PartnerMap";
+import { AgentTracePane } from "@/components/brief/AgentTracePane";
+import { AffiliateChip } from "@/components/brief/AffiliateChip";
+import { AffiliateLedgerPanel } from "@/components/brief/AffiliateLedgerPanel";
 
 const ICONS: Record<WeatherDay["icon"], React.ReactNode> = {
   sun: <Sun size={20} />,
@@ -66,6 +69,9 @@ export default function TripDetailPage({
   const [brief, setBrief] = useState<ArrivalBriefResponse | null>(null);
   const [error, setError] = useState<"unauthorized" | "notfound" | "other" | null>(null);
   const [loading, setLoading] = useState(true);
+  // Live web search via the concierge agent runs by default — no user
+  // opt-in required. The trace pane auto-starts once the brief is loaded.
+  const [ledgerRefresh, setLedgerRefresh] = useState(0);
 
   useEffect(() => {
     void params.then((p) => setId(p.id));
@@ -193,6 +199,31 @@ export default function TripDetailPage({
           </div>
         ) : (
           <>
+            {id ? (
+              <AgentTracePane
+                stayId={id}
+                liveSearchEnabled={true}
+                autoStart={true}
+                onFinalBrief={(agentBrief) => {
+                  setBrief((prev) => ({
+                    ...(prev as ArrivalBriefResponse),
+                    ...agentBrief,
+                    // preserve identifying fields from the cached brief
+                    stay_id: prev?.stay_id ?? agentBrief.stay_id,
+                    guest_id: prev?.guest_id ?? agentBrief.guest_id,
+                    hotel: prev?.hotel ?? agentBrief.hotel,
+                    city: prev?.city ?? agentBrief.city,
+                    check_in: prev?.check_in ?? agentBrief.check_in,
+                    check_out: prev?.check_out ?? agentBrief.check_out,
+                    weather_forecast:
+                      (agentBrief.weather_forecast?.length ?? 0) > 0
+                        ? agentBrief.weather_forecast
+                        : (prev?.weather_forecast ?? []),
+                    eco_note: prev?.eco_note ?? agentBrief.eco_note,
+                  }));
+                }}
+              />
+            ) : null}
             <section className="bg-white border border-[var(--color-bonvoy-rule)] rounded-lg p-6 md:p-8 mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles size={14} className="text-[var(--color-marriott-red)]" />
@@ -287,6 +318,15 @@ export default function TripDetailPage({
                         <p className="text-[13px] text-[var(--color-bonvoy-muted)] leading-relaxed">
                           {e.why_youll_love_it}
                         </p>
+                        {e.affiliate && id ? (
+                          <div className="mt-2">
+                            <AffiliateChip
+                              stayId={id}
+                              offer={e.affiliate}
+                              onTracked={() => setLedgerRefresh((n) => n + 1)}
+                            />
+                          </div>
+                        ) : null}
                       </div>
                     </li>
                   ))}
@@ -319,6 +359,15 @@ export default function TripDetailPage({
                       <p className="text-[13px] text-[var(--color-bonvoy-muted)]">
                         {d.note}
                       </p>
+                      {d.affiliate && id ? (
+                        <div className="mt-2">
+                          <AffiliateChip
+                            stayId={id}
+                            offer={d.affiliate}
+                            onTracked={() => setLedgerRefresh((n) => n + 1)}
+                          />
+                        </div>
+                      ) : null}
                     </li>
                   ))}
                 </ul>
@@ -360,6 +409,10 @@ export default function TripDetailPage({
                 </div>
               </section>
             )}
+
+            {id ? (
+              <AffiliateLedgerPanel stayId={id} refreshKey={ledgerRefresh} />
+            ) : null}
           </>
         )}
 

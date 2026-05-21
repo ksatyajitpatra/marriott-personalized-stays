@@ -9,12 +9,16 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from app.models.concierge import AffiliateOffer, ToolCallSummary
+
 
 class BriefEvent(BaseModel):
     name: str
     date: str
     type: str
     why_youll_love_it: str
+    affiliate: AffiliateOffer | None = None
+    source_url: str | None = None
 
 
 class BriefDining(BaseModel):
@@ -22,6 +26,8 @@ class BriefDining(BaseModel):
     cuisine: str
     dietary_match: str
     note: str
+    affiliate: AffiliateOffer | None = None
+    source_url: str | None = None
 
 
 class WeatherDay(BaseModel):
@@ -53,3 +59,11 @@ class ArrivalBriefResponse(BaseModel):
     transit: str
     property_note: str
     eco_note: str | None = None
+    live_search_used: bool = Field(
+        default=False,
+        description="True when the agent's Tavily-backed tools returned live data.",
+    )
+    tool_calls: list[ToolCallSummary] = Field(
+        default_factory=list,
+        description="Compact record of each tool invocation made during generation.",
+    )
